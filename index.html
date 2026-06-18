@@ -38,8 +38,6 @@
   .row>div{flex:1}
   .blk{margin-bottom:16px}
   .hint{font-size:12px; color:var(--muted); margin-top:6px}
-  .file{font-size:13px}
-  .file input{padding:8px; background:none; border:1px dashed var(--line)}
   button.go{width:100%; margin-top:8px; padding:14px; font:inherit; font-weight:700; font-size:15px; color:var(--ink); background:var(--yellow); border:1px solid #d8b400; border-radius:9px; cursor:pointer; transition:filter .12s}
   button.go:hover{filter:brightness(.96)}
   button.go:disabled{opacity:.5; cursor:not-allowed}
@@ -50,11 +48,12 @@
   .tag{aspect-ratio:2/1; border:3px solid var(--red); border-radius:12px; background:#fff; padding:8px 12px;
        display:grid; grid-template-columns:auto 1fr; grid-template-rows:auto 1fr auto; gap:2px 8px; align-items:center; color:#000}
   .tag .h{grid-column:1/3; text-align:center; color:var(--red); font-weight:700; font-size:12px}
-  .tag .tri{grid-row:2; width:60px; height:54px; align-self:center}
+  .tag .tri{grid-row:2; height:54px; width:auto; align-self:center; justify-self:center}
   .tag .mid{grid-row:2; text-align:center}
   .tag .num{font-family:var(--mono); font-weight:700; font-size:30px; line-height:1.1}
-  .tag .logo{font-size:10px; color:#999; font-style:italic; margin-top:2px}
-  .tag .logo img{max-height:26px; max-width:120px}
+  .tag .logo{min-height:26px; margin-top:2px}
+  .tag .logo img{max-height:26px; max-width:120px; display:block; margin:0 auto}
+  .tag .logo .ph-text{font-size:10px; color:#999; font-style:italic}
   .tag .ph{font-weight:700; font-size:13px; margin-top:2px}
   .tag .f{grid-column:1/3; text-align:center; color:var(--red); font-weight:700; font-size:8.5px; letter-spacing:.02em}
   .note{font-size:12px; color:var(--muted); margin-top:12px}
@@ -107,12 +106,6 @@
         <input id="phone" class="mono" value="1.937.506.8444">
       </div>
 
-      <div class="blk file">
-        <label class="fld" for="logo">Logo (optional)</label>
-        <input id="logo" type="file" accept="image/png,image/jpeg">
-        <div class="hint">Loads for this session. For the deployed version, embed it in the file (see code comment).</div>
-      </div>
-
       <button class="go" id="go">Generate PDF</button>
       <div class="readout" id="readout"></div>
     </div>
@@ -122,18 +115,15 @@
       <div class="pv-label">Preview</div>
       <div class="tag" id="tag">
         <div class="h">Electrical Energy Isolation Point</div>
-        <svg class="tri" viewBox="0 0 100 90" aria-hidden="true">
-          <polygon points="50,6 96,84 4,84" fill="#FFD200" stroke="#111" stroke-width="7" stroke-linejoin="round"/>
-          <polygon points="56,30 33,54 47,54 41,74 67,44 53,44" fill="#111"/>
-        </svg>
+        <img class="tri" id="pvTri" alt="" aria-hidden="true">
         <div class="mid">
           <div class="num" id="pvNum">E-5000</div>
-          <div class="logo" id="pvLogo">[ logo ]</div>
+          <div class="logo" id="pvLogo"><span class="ph-text">[ logo ]</span></div>
           <div class="ph" id="pvPhone">1.937.506.8444</div>
         </div>
         <div class="f">DO NOT REMOVE THIS TAG</div>
       </div>
-      <p class="note">Layout: Avery 5163 — 2"&times;4", 10 per US&nbsp;Letter sheet. <strong>Test-print on your actual stock before rollout</strong> and nudge the geometry constants if the tags drift.</p>
+      <p class="note">Layout: Avery 5163 &mdash; 2"&times;4", 10 per US&nbsp;Letter sheet. <strong>Test-print on your actual stock before rollout</strong> and nudge the geometry constants if the tags drift.</p>
     </div>
   </div>
 </div>
@@ -143,17 +133,20 @@
    ISOLATION LABEL GENERATOR  —  client-side, no server required.
    Renders a print-ready PDF in the browser with jsPDF.
 
-   CALIBRATION (the one thing that must match your hardware):
-   The constants below are Avery 5163 (2"x4", 10-up). If your tags print
-   slightly off, adjust MARGIN_* / GUTTER / LABEL_* (values are in points;
-   72 points = 1 inch) and test-print again.
+   ASSETS: pulled from this repo by relative path (see ASSET PATHS below).
+   The tool must be SERVED with the /assets folder beside it (GitHub Pages).
+   Opening index.html alone, locally, will not load the logo/symbol.
 
-   LOGO: paste the real logo's base64 data URL into LOGO_DATAURL to bake it
-   into the deployed file, e.g. "data:image/png;base64,iVBORw0KG..."
+   CALIBRATION (the one thing that must match your hardware):
+   The constants below are Avery 5163 (2"x4", 10-up). If tags print slightly
+   off, adjust MARGIN_* / GUTTER / LABEL_* (points; 72 pt = 1 inch) and re-test.
    ========================================================================= */
-const VERSION = "1.0.0";       // bump on every change (see README changelog)
+const VERSION = "1.1.0";        // bump on every change (see README changelog)
 const BUILD_DATE = "2026-06-17";
-const LOGO_DATAURL = "";   // <-- embed the PSG logo here for the deployed version
+
+// --- ASSET PATHS (relative to index.html in the repo) ---
+const LOGO_SRC   = "assets/logos/pgs-logo.jpg";
+const SYMBOL_SRC = "assets/symbols/hazard-triangle.svg";
 
 // --- label-stock geometry (points) ---
 const PT = 72;
@@ -166,19 +159,53 @@ const COL_GUTTER  = 0.1875*PT;
 const ROW_GUTTER  = 0;
 const PER_PAGE = COLS*ROWS;
 
-const RED=[225,37,27], YELLOW=[255,210,0], BLACK=[0,0,0], GREY=[150,150,150];
+const RED=[225,37,27], BLACK=[0,0,0], GREY=[150,150,150];
 
 let mode = 'range';
-let sessionLogo = LOGO_DATAURL || null;
-
 const $ = id => document.getElementById(id);
 
-// ---------- input -> list of numbers ----------
+/* ---------- asset loading ---------- */
+let logoImg = null, logoAspect = 1;
+let symbolCanvas = null, symbolAspect = 1;
+
+function loadImage(src){
+  return new Promise((ok,no)=>{ const im=new Image(); im.onload=()=>ok(im); im.onerror=()=>no(new Error('img '+src)); im.src=src; });
+}
+async function svgToCanvas(src, targetH){
+  const txt = await (await fetch(src)).text();
+  let aspect = 1;
+  const vb = txt.match(/viewBox\s*=\s*["']([\d.\s,-]+)["']/i);
+  if(vb){ const p = vb[1].trim().split(/[\s,]+/).map(Number); if(p.length===4 && p[3]>0) aspect = p[2]/p[3]; }
+  const h = targetH, w = Math.max(1, Math.round(h*aspect));
+  const url = URL.createObjectURL(new Blob([txt], {type:'image/svg+xml'}));
+  const img = await loadImage(url);
+  const cv = document.createElement('canvas'); cv.width=w; cv.height=h;
+  cv.getContext('2d').drawImage(img, 0, 0, w, h);
+  URL.revokeObjectURL(url);
+  return {canvas:cv, aspect};
+}
+const assetsP = (async ()=>{
+  // logo (JPG/PNG)
+  try{
+    logoImg = await loadImage(LOGO_SRC);
+    logoAspect = logoImg.naturalWidth / logoImg.naturalHeight;
+    const el = $('pvLogo'); el.innerHTML=''; const im=document.createElement('img'); im.src=LOGO_SRC; im.alt='logo'; el.appendChild(im);
+  }catch(e){ logoImg=null; }
+  // hazard symbol (SVG -> hi-res canvas, rasterized once)
+  try{
+    const r = await svgToCanvas(SYMBOL_SRC, 240);
+    symbolCanvas = r.canvas; symbolAspect = r.aspect;
+    $('pvTri').src = SYMBOL_SRC;
+  }catch(e){ symbolCanvas=null; }
+  refresh();
+})();
+
+/* ---------- input -> list of numbers ---------- */
 function getNumbers(){
   if(mode==='range'){
     const a = parseInt($('start').value,10), b = parseInt($('end').value,10);
     if(isNaN(a)||isNaN(b)) return {nums:[], err:'Enter a start and end number.'};
-    if(b<a) return {nums:[], err:'“To” must be greater than or equal to “From”.'};
+    if(b<a) return {nums:[], err:'\u201cTo\u201d must be greater than or equal to \u201cFrom\u201d.'};
     const nums=[]; for(let n=a;n<=b;n++) nums.push(n);
     return {nums};
   }
@@ -192,13 +219,11 @@ function fmt(n){
   return ($('prefix').value||'') + body;
 }
 
-// ---------- live preview + readout ----------
+/* ---------- live preview + readout ---------- */
 function refresh(){
   const {nums,err} = getNumbers();
   $('pvNum').textContent = nums.length ? fmt(nums[0]) : fmt(0);
   $('pvPhone').textContent = $('phone').value || '';
-  const pvLogo = $('pvLogo');
-  pvLogo.innerHTML = sessionLogo ? `<img src="${sessionLogo}" alt="logo">` : '[ logo ]';
   const ro = $('readout'), go = $('go');
   if(err){ ro.innerHTML = `<span class="warn">${err}</span>`; go.disabled = true; return; }
   go.disabled = false;
@@ -206,11 +231,11 @@ function refresh(){
   ro.innerHTML = `${nums.length} label${nums.length!==1?'s':''} &middot; ${sheets} sheet${sheets!==1?'s':''} &middot; Avery 5163 (10/sheet)`;
 }
 
-// ---------- draw one label at top-left (x,y) ----------
-function fillPoly(doc, pts, rgb){
-  doc.setFillColor(...rgb);
-  const d = []; for(let i=1;i<pts.length;i++) d.push([pts[i][0]-pts[i-1][0], pts[i][1]-pts[i-1][1]]);
-  doc.lines(d, pts[0][0], pts[0][1], [1,1], 'F', true);
+/* ---------- draw one label at top-left (x,y) ---------- */
+function place(doc, src, type, aspect, bx, by, bw, bh){
+  let w=bw, h=bw/aspect;
+  if(h>bh){ h=bh; w=bh*aspect; }
+  doc.addImage(src, type, bx+(bw-w)/2, by+(bh-h)/2, w, h);
 }
 function drawLabel(doc, x, y, text, phone){
   // border
@@ -219,22 +244,14 @@ function drawLabel(doc, x, y, text, phone){
   // header
   doc.setTextColor(...RED); doc.setFont('helvetica','bold'); doc.setFontSize(10.5);
   doc.text('Electrical Energy Isolation Point', x+LABEL_W/2, y+22, {align:'center'});
-  // hazard triangle (left)
-  const cx=x+60, top=y+44, h=58, half=33;
-  doc.setFillColor(...YELLOW); doc.setDrawColor(...BLACK); doc.setLineWidth(1.6); doc.setLineJoin('round');
-  doc.triangle(cx, top, cx-half, top+h, cx+half, top+h, 'FD');
-  // bolt
-  fillPoly(doc, [[cx+5,top+14],[cx-12,top+30],[cx-2,top+30],[cx-7,top+46],[cx+13,top+24],[cx+1,top+24]], BLACK);
+  // hazard symbol (left) — from repo SVG, rasterized
+  if(symbolCanvas){ place(doc, symbolCanvas, 'PNG', symbolAspect, x+26, y+38, 68, 62); }
   // serial number (upper right)
   doc.setTextColor(...BLACK); doc.setFont('helvetica','bold'); doc.setFontSize(28);
   doc.text(text, x+186, y+58, {align:'center'});
-  // logo or placeholder
-  if(sessionLogo){
-    try{ doc.addImage(sessionLogo, 'PNG', x+150, y+70, 72, 30, undefined, 'FAST'); }catch(e){}
-  } else {
-    doc.setTextColor(...GREY); doc.setFont('helvetica','italic'); doc.setFontSize(8);
-    doc.text('[ logo ]', x+186, y+86, {align:'center'});
-  }
+  // logo (mid right) — from repo
+  if(logoImg){ place(doc, logoImg, 'JPEG', logoAspect, x+150, y+70, 82, 32); }
+  else { doc.setTextColor(...GREY); doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.text('[ logo ]', x+186, y+86, {align:'center'}); }
   // phone
   doc.setTextColor(...BLACK); doc.setFont('helvetica','bold'); doc.setFontSize(12.5);
   doc.text(phone, x+186, y+112, {align:'center'});
@@ -243,8 +260,9 @@ function drawLabel(doc, x, y, text, phone){
   doc.text('DO NOT REMOVE THIS TAG', x+LABEL_W/2, y+130, {align:'center'});
 }
 
-// ---------- build the PDF ----------
-function generate(){
+/* ---------- build the PDF ---------- */
+async function generate(){
+  await assetsP;                       // ensure logo + symbol are loaded
   const {nums,err} = getNumbers();
   if(err || !nums.length) return;
   const { jsPDF } = window.jspdf;
@@ -264,11 +282,10 @@ function generate(){
     const y = MARGIN_TOP  + row*(LABEL_H+ROW_GUTTER);
     drawLabel(doc, x, y, fmt(n), phone);
   });
-  const first = fmt(nums[0]), last = fmt(nums[nums.length-1]);
-  doc.save(`isolation-labels_${first}_to_${last}.pdf`);
+  doc.save(`isolation-labels_${fmt(nums[0])}_to_${fmt(nums[nums.length-1])}.pdf`);
 }
 
-// ---------- wiring ----------
+/* ---------- wiring ---------- */
 function setMode(m){
   mode=m;
   $('tabRange').setAttribute('aria-selected', m==='range');
@@ -280,10 +297,6 @@ function setMode(m){
 $('tabRange').onclick = ()=>setMode('range');
 $('tabList').onclick  = ()=>setMode('list');
 ['start','end','list','prefix','pad','phone'].forEach(id=> $(id).addEventListener('input', refresh));
-$('logo').addEventListener('change', e=>{
-  const f=e.target.files[0]; if(!f){ sessionLogo=LOGO_DATAURL||null; refresh(); return; }
-  const r=new FileReader(); r.onload=()=>{ sessionLogo=r.result; refresh(); }; r.readAsDataURL(f);
-});
 $('go').onclick = generate;
 $('verBadge').textContent = 'v' + VERSION;
 refresh();
