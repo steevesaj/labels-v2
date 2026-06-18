@@ -248,18 +248,18 @@
             <div><label class="fld" for="pad">Pad to digits</label><input id="pad" class="mono" type="number" value="4" min="0" max="8"></div>
           </div>
 
-          <div class="blk">
-            <label class="fld" for="phone">Phone</label>
-            <input id="phone" class="mono" value="+1 657-502-6544">
-          </div>
-
           <div class="divider"></div>
 
-          <div class="blk">
-            <label class="fld" for="site">Site code</label>
-            <input id="site" class="mono" placeholder="YVR6" value="">
-            <div class="hint">Location code &mdash; feeds the optional label line and the QR asset ID.</div>
+          <div class="row blk">
+            <div><label class="fld" for="phone">Phone</label><input id="phone" class="mono" value="+1 657-502-6544"></div>
+            <div><label class="fld" for="tech">Technician name</label><input id="tech" placeholder="e.g. J. Smith"></div>
           </div>
+
+          <div class="row blk">
+            <div><label class="fld" for="site">Site code</label><input id="site" class="mono" placeholder="YVR6" value="YVR6"></div>
+            <div><label class="fld" for="qrYear">Asset ID year</label><input id="qrYear" class="mono" type="number" value="2026"></div>
+          </div>
+          <div class="hint" id="assetPreview" style="margin:-10px 0 18px"></div>
 
           <div class="tog-group">
             <label class="tog">
@@ -270,12 +270,6 @@
               <div><div class="lab">QR asset tag</div><div class="sub">Scannable ID &middot; centers the layout</div></div>
               <span class="switch"><input type="checkbox" id="showQR"><span class="track"></span></span>
             </label>
-          </div>
-
-          <div id="qrYearRow" class="blk" style="display:none">
-            <label class="fld" for="qrYear">Asset ID year</label>
-            <input id="qrYear" class="mono" type="number" value="2026">
-            <div class="hint" id="assetPreview"></div>
           </div>
 
           <button class="go" id="go">Generate PDF</button>
@@ -343,8 +337,8 @@
      LAYOUTS       -> page size, grid, label size, margins, gaps (Avery presets + Custom)
    ASSETS load by relative path; serve /assets beside this file (GitHub Pages).
    ========================================================================= */
-const VERSION = "2.3.1-preview";
-const BUILD_DATE = "2026-06-17";
+const VERSION = "2.4.0";
+const BUILD_DATE = "2026-06-18";
 const PT = 72;
 const LS = 'ilg.settings';
 
@@ -679,7 +673,6 @@ function drawQR(pen, m, x, y, size){
   for(let r=0;r<n;r++) for(let col=0;col<n;col++) if(m[r][col]) pen.fillRect(x+col*mod, y+r*mod, mod+o, mod+o, [0,0,0]);
 }
 function updateAssetUI(){
-  $('qrYearRow').style.display = $('showQR').checked ? '' : 'none';
   const first = currentPreviewNum();
   const L=currentLayout();
   // asset ID breakdown legend (always shown)
@@ -847,7 +840,7 @@ function saveSettings(){
     const cust={}; CUSTOM_FIELDS.forEach(id=> cust[id]=$(id).value);
     localStorage.setItem(LS, JSON.stringify({ format:curFormat, energy:curEnergy, company:curCompany, mode,
       start:$('start').value, end:$('end').value, list:$('list').value, prefix:$('prefix').value, pad:$('pad').value, phone:$('phone').value,
-      site:$('site').value, qrYear:$('qrYear').value, showSite:$('showSite').checked, showQR:$('showQR').checked, style:curStyle, cust }));
+      site:$('site').value, qrYear:$('qrYear').value, tech:$('tech').value, showSite:$('showSite').checked, showQR:$('showQR').checked, style:curStyle, cust }));
   }catch(e){}
 }
 function restoreInputs(s){
@@ -858,8 +851,9 @@ function restoreInputs(s){
   if(s.prefix!=null) $('prefix').value=s.prefix;
   if(s.pad!=null) $('pad').value=s.pad;
   if(s.phone) $('phone').value=s.phone;
-  if(s.site!=null) $('site').value=s.site;
+  if(s.site) $('site').value=s.site;   // keep YVR6 default if nothing was saved
   if(s.qrYear!=null) $('qrYear').value=s.qrYear;
+  if(s.tech!=null) $('tech').value=s.tech;
   if(s.showSite!=null) $('showSite').checked=!!s.showSite;
   if(s.showQR!=null) $('showQR').checked=!!s.showQR;
   if(s.cust) CUSTOM_FIELDS.forEach(id=>{ if(s.cust[id]!=null) $(id).value=s.cust[id]; });
@@ -885,7 +879,7 @@ $('tabList').onclick  = ()=>setMode('list');
 function setStyle(s){ curStyle=s; $('styleModern').setAttribute('aria-selected', s==='modern'); $('styleClassic').setAttribute('aria-selected', s==='classic'); refresh(); }
 $('styleModern').onclick = ()=>setStyle('modern');
 $('styleClassic').onclick = ()=>setStyle('classic');
-['start','end','list','prefix','pad','phone','site','qrYear'].forEach(id=> $(id).addEventListener('input', refresh));
+['start','end','list','prefix','pad','phone','site','qrYear','tech'].forEach(id=> $(id).addEventListener('input', refresh));
 ['showSite','showQR'].forEach(id=> $(id).addEventListener('change', refresh));
 ['cPage','cContent','cW','cH','cCols','cRows','cML','cMT','cGX','cGY','cR'].forEach(id=> $(id).addEventListener('input', applyFormat));
 ['start','end','prefix','pad','phone'].forEach(id=> $(id).addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); generate(); } }));
