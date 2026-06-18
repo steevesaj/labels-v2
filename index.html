@@ -156,7 +156,7 @@
     </div>
     <div>
       <h1>Isolation Label Generator</h1>
-      <div class="meta">Pick a format, energy type &amp; company &middot; print-ready PDF tag sheets</div>
+      <div class="meta">Modernized label layout &middot; filled header, QR-forward &middot; print-ready PDF</div>
     </div>
     <div class="right">
       <span class="pill">Build <span id="buildDate"></span></span>
@@ -211,6 +211,14 @@
           <div class="row blk">
             <div><label class="fld" for="energy">Energy type</label><select id="energy"></select></div>
             <div><label class="fld" for="company">Company</label><select id="company"></select></div>
+          </div>
+
+          <div class="blk">
+            <label class="fld">Label style</label>
+            <div class="seg" role="tablist">
+              <button id="styleModern" role="tab" aria-selected="true">Modern (new)</button>
+              <button id="styleClassic" role="tab" aria-selected="false">Classic (old)</button>
+            </div>
           </div>
 
           <div class="divider"></div>
@@ -335,7 +343,7 @@
      LAYOUTS       -> page size, grid, label size, margins, gaps (Avery presets + Custom)
    ASSETS load by relative path; serve /assets beside this file (GitHub Pages).
    ========================================================================= */
-const VERSION = "2.0.1";
+const VERSION = "2.1.0-preview";
 const BUILD_DATE = "2026-06-17";
 const PT = 72;
 const LS = 'ilg.settings';
@@ -377,6 +385,7 @@ const LAYOUTS = {
 const BLACK=[0,0,0], GREY=[150,150,150];
 
 let mode='range', curFormat='ol996wj', curEnergy='electrical', curCompany='psg';
+let curStyle='modern';
 let pvIndex=0;
 function previewNums(){ return getNumbers().nums; }
 function clampPvIndex(){ const n=previewNums().length; if(pvIndex<0)pvIndex=0; if(n && pvIndex>n-1)pvIndex=n-1; if(!n)pvIndex=0; }
@@ -558,6 +567,64 @@ function drawIso(pen,x,y,w,h,c){
 
   pen.text('DO NOT REMOVE THIS TAG',cx,y+h*0.915,h*0.052,c.col,'center',true);
 }
+/* MODERN style — filled red header banner, number top-left, hazard+site mid-left,
+   large QR upper-right, phone / DO-NOT-REMOVE / logo stacked bottom-center. */
+function drawIsoModern(pen,x,y,w,h,c){
+  const ins=h*0.04, r=(c.radius!=null?c.radius:h*0.085);
+  // base fill (theme bg or white), clipped to rounded label
+  pen.fillRoundRect(x+ins, y+ins, w-2*ins, h-2*ins, r, isWhite(c.bg)?[255,255,255]:c.bg);
+  // header band: rounded top, squared bottom
+  const bx=x+ins, by=y+ins, bw=w-2*ins, bh=h*0.205;
+  pen.fillRoundRect(bx, by, bw, bh, r, c.col);
+  pen.fillRect(bx, by+bh*0.5, bw, bh*0.55, c.col);
+  pen.text(c.header, x+w/2, by+bh*0.70, fitFont(pen, c.header, bw*0.92, h*0.090, h*0.05), [255,255,255], 'center', true);
+
+  const bodyTop=by+bh, bodyBot=y+h-ins, bodyH=bodyBot-bodyTop;
+  const padL=x+w*0.07;
+
+  // QR upper-right
+  let qrLeft = x+w-ins-w*0.03;
+  if(c.qr){
+    const qrS=Math.min(bodyH*0.62, w*0.30);
+    const qrX=x+w-ins-w*0.05-qrS, qrY=bodyTop+bodyH*0.05;
+    drawQR(pen, c.qr, qrX, qrY, qrS);
+    qrLeft=qrX;
+    if(c.assetId){
+      const fs=fitFont(pen, c.assetId, qrS+w*0.04, h*0.045, h*0.026);
+      pen.text(c.assetId, qrX+qrS/2, qrY+qrS+h*0.058, fs, BLACK, 'center', false);
+    }
+  }
+  const rightLim = qrLeft - w*0.025;
+  const colW = Math.max(w*0.2, rightLim - padL);
+  const colCx = padL + colW/2;
+
+  // number (top-left, large)
+  const numFs=fitFont(pen, c.text, colW, h*0.21, h*0.085);
+  pen.text(c.text, padL, bodyTop+bodyH*0.27, numFs, c.num, 'left', true);
+
+  // hazard triangle + site code (mid-left row)
+  const triTop=bodyTop+bodyH*0.33, triH=bodyH*0.27; let triRight=padL;
+  if(c.sym){ const triW=triH; pen.fitImage(c.sym,'PNG', padL, triTop, triW, triH, c.symAlias); triRight=padL+triW; }
+  if(c.siteCode){
+    const sMaxW=Math.max(w*0.15, rightLim-(triRight+w*0.04));
+    const siteFs=fitFont(pen, c.siteCode, sMaxW, h*0.15, h*0.05);
+    pen.text(c.siteCode, triRight+w*0.045, triTop+triH*0.74, siteFs, c.num, 'left', true);
+  }
+
+  // footer: phone / DO NOT REMOVE / logo, centered in the left column under the triangle
+  const gap=h*0.016;
+  const phoneFs=fitFont(pen, c.phone, colW, h*0.080, h*0.045);
+  const dnrFs=fitFont(pen, 'DO NOT REMOVE THIS TAG', colW, h*0.052, h*0.030);
+  const logoH = c.logo ? bodyH*0.15 : h*0.045;
+  let fy = Math.max(triTop+triH+gap, bodyBot-(phoneFs+gap+dnrFs+gap+logoH));
+  pen.text(c.phone, colCx, fy+phoneFs*0.8, phoneFs, BLACK, 'center', true); fy+=phoneFs+gap;
+  pen.text('DO NOT REMOVE THIS TAG', colCx, fy+dnrFs*0.8, dnrFs, c.col, 'center', true); fy+=dnrFs+gap;
+  if(c.logo){ const lw=Math.min(w*0.34, colW); pen.fitImage(c.logo, c.logoFmt, colCx-lw/2, fy, lw, logoH, c.logoAlias); }
+  else pen.text('[ logo ]', colCx, fy+logoH*0.7, h*0.045, GREY, 'center', false);
+
+  // crisp outer border last
+  pen.strokeRoundRect(x+ins, y+ins, w-2*ins, h-2*ins, r, c.col, Math.max(1, h*0.02));
+}
 function drawCompact(pen,x,y,w,h,c){
   const ins=h*0.06, r=(c.radius!=null?c.radius:h*0.12);
   if(!isWhite(c.bg)) pen.fillRoundRect(x+h*0.02,y+h*0.02,w-h*0.04,h-h*0.04,h*0.14,c.bg);
@@ -613,6 +680,7 @@ function buildCtx(L){
     logo:logoCache[curCompany]||null, logoFmt:co.fmt, logoAlias:'logo-'+curCompany,
     radius:(L.custom?L.radiusPt:null),
     siteCode:($('showSite').checked && site && L.content!=='compact')?site:null,
+    style:curStyle,
     showQR:($('showQR').checked && L.content!=='compact'), qr:null, assetId:null };
 }
 
@@ -676,7 +744,7 @@ function drawPreview(){
   cv.style.width=(LW*S)+'px'; cv.style.height=(LH*S)+'px';
   const ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,LW*S,LH*S);
   ctx.fillStyle='#fff'; ctx.fillRect(0,0,LW*S,LH*S);
-  const drawer = (L.content==='compact') ? drawCompact : drawIso;
+  const drawer = (L.content==='compact') ? drawCompact : (c.style==='classic' ? drawIso : drawIsoModern);
   drawer(canvasPen(ctx,S), 0, 0, LW, LH, c);
 }
 
@@ -726,7 +794,7 @@ async function generate(){
     });
     const ctx=buildCtx(L);
     const pen=pdfPen(doc);
-    const drawer = (L.content==='compact') ? drawCompact : drawIso;
+    const drawer = (L.content==='compact') ? drawCompact : (curStyle==='classic' ? drawIso : drawIsoModern);
     const CHUNK=50;
     for(let i=0;i<nums.length;i++){
       if(i>0 && i%g.perPage===0) doc.addPage();
@@ -755,7 +823,7 @@ function saveSettings(){
     const cust={}; CUSTOM_FIELDS.forEach(id=> cust[id]=$(id).value);
     localStorage.setItem(LS, JSON.stringify({ format:curFormat, energy:curEnergy, company:curCompany, mode,
       start:$('start').value, end:$('end').value, list:$('list').value, prefix:$('prefix').value, pad:$('pad').value, phone:$('phone').value,
-      site:$('site').value, qrYear:$('qrYear').value, showSite:$('showSite').checked, showQR:$('showQR').checked, cust }));
+      site:$('site').value, qrYear:$('qrYear').value, showSite:$('showSite').checked, showQR:$('showQR').checked, style:curStyle, cust }));
   }catch(e){}
 }
 function restoreInputs(s){
@@ -790,6 +858,9 @@ $('pvPrev').onclick = ()=>stepPreview(-1);
 $('pvNext').onclick = ()=>stepPreview(1);
 $('tabRange').onclick = ()=>setMode('range');
 $('tabList').onclick  = ()=>setMode('list');
+function setStyle(s){ curStyle=s; $('styleModern').setAttribute('aria-selected', s==='modern'); $('styleClassic').setAttribute('aria-selected', s==='classic'); refresh(); }
+$('styleModern').onclick = ()=>setStyle('modern');
+$('styleClassic').onclick = ()=>setStyle('classic');
 ['start','end','list','prefix','pad','phone','site','qrYear'].forEach(id=> $(id).addEventListener('input', refresh));
 ['showSite','showQR'].forEach(id=> $(id).addEventListener('change', refresh));
 ['cPage','cContent','cW','cH','cCols','cRows','cML','cMT','cGX','cGY','cR'].forEach(id=> $(id).addEventListener('input', applyFormat));
@@ -815,9 +886,11 @@ try{ SAVED=JSON.parse(localStorage.getItem(LS)||'null'); }catch(e){}
 if(SAVED){
   if(LAYOUTS[SAVED.format]) curFormat=SAVED.format;
   if(ENERGY_TYPES[SAVED.energy]) curEnergy=SAVED.energy;
+  if(SAVED.style==='classic'||SAVED.style==='modern') curStyle=SAVED.style;
   if(SAVED.mode==='list') mode='list';
 }
 $('format').value=curFormat; $('energy').value=curEnergy;
+setStyle(curStyle);
 restoreInputs(SAVED);                 // custom fields needed before applyFormat geometry
 applyFormat();
 (async ()=>{
