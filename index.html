@@ -5,210 +5,315 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Isolation Label Generator</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#1a1d21; --paper:#eceef1; --card:#ffffff; --line:#dfe2e7;
-    --muted:#6b7280; --red:#E1251B; --yellow:#FFD200; --field:#f7f8fa;
-    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --bg:#f4f6f9; --surface:#ffffff; --surface-2:#fafbfc;
+    --ink:#0f141b; --ink-2:#3a444f; --muted:#6c7783; --line:#e6e9ef; --line-2:#eef1f5;
+    --accent:oklch(0.55 0.15 264); --accent-press:oklch(0.48 0.15 264); --accent-soft:oklch(0.95 0.03 264);
+    --red:#E1251B; --yellow:#FFD200; --ok:oklch(0.6 0.13 150);
+    --sans:'IBM Plex Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --shadow:0 1px 2px rgba(16,20,27,.04), 0 6px 22px rgba(16,20,27,.06);
+  }
+  :root[data-theme="dark"]{
+    --bg:#0e131a; --surface:#161d27; --surface-2:#1b232e;
+    --ink:#e7ecf2; --ink-2:#aeb8c4; --muted:#7f8b99; --line:#2a333f; --line-2:#222a34;
+    --accent-soft:oklch(0.34 0.08 264);
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.4);
   }
   *{box-sizing:border-box}
-  body{margin:0; background:var(--paper); color:var(--ink);
-    font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; line-height:1.45; -webkit-font-smoothing:antialiased;}
-  .wrap{max-width:1000px; margin:0 auto; padding:28px 20px 64px}
-  header{display:flex; align-items:center; gap:14px; margin-bottom:6px}
-  .hazard{width:34px; height:30px; flex:none}
-  h1{font-size:22px; margin:0; letter-spacing:-.01em}
-  .ver{font-family:var(--mono); font-size:11px; color:var(--muted); margin-top:2px}
-  .sub{color:var(--muted); font-size:14px; margin:2px 0 24px}
-  .grid{display:grid; grid-template-columns:1fr 360px; gap:22px; align-items:start}
-  @media(max-width:760px){.grid{grid-template-columns:1fr}}
-  .card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px}
-  .seg{display:flex; background:var(--field); border:1px solid var(--line); border-radius:9px; padding:3px; margin-bottom:18px}
-  .seg button{flex:1; border:0; background:none; padding:9px; font:inherit; font-weight:600; font-size:14px; color:var(--muted); border-radius:7px; cursor:pointer}
-  .seg button[aria-selected="true"]{background:var(--ink); color:#fff}
-  label.fld{display:block; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin:0 0 6px}
-  input,textarea,select{width:100%; padding:11px 12px; font:inherit; background:var(--field); border:1px solid var(--line); border-radius:8px; color:var(--ink)}
-  select{appearance:none; -webkit-appearance:none; cursor:pointer; background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' fill='none' stroke='%236b7280' stroke-width='1.5'/></svg>"); background-repeat:no-repeat; background-position:right 12px center; padding-right:32px}
-  input:focus,textarea:focus,select:focus{outline:2px solid var(--ink); outline-offset:-1px; border-color:var(--ink)}
-  input.mono{font-family:var(--mono)}
-  textarea{font-family:var(--mono); min-height:76px; resize:vertical}
-  .row{display:flex; gap:12px}
+  html,body{margin:0}
+  body{
+    background:var(--bg); color:var(--ink); font-family:var(--sans);
+    line-height:1.45; -webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(circle at 1px 1px, rgba(16,20,27,.035) 1px, transparent 0);
+    background-size:22px 22px;
+    transition:background-color .2s, color .2s;
+  }
+  :root[data-theme="dark"] body{ background-image:radial-gradient(circle at 1px 1px, rgba(255,255,255,.045) 1px, transparent 0); }
+  .shell{max-width:1120px; margin:0 auto; padding:30px 24px 72px}
+
+  .top{display:flex; align-items:center; gap:14px; margin-bottom:26px}
+  .mark{width:42px; height:42px; flex:none; display:grid; place-items:center; background:#10151d; border-radius:11px; box-shadow:var(--shadow)}
+  .mark svg{width:24px; height:22px}
+  .top h1{font-size:19px; font-weight:700; margin:0; letter-spacing:-.01em}
+  .top .meta{font-size:12.5px; color:var(--muted); margin-top:1px}
+  .top .right{margin-left:auto; display:flex; align-items:center; gap:10px}
+  .pill{font-family:var(--mono); font-size:11px; font-weight:500; color:var(--ink-2); background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:5px 11px; box-shadow:var(--shadow)}
+  .pill b{color:var(--accent)}
+  .icon-btn{display:grid; place-items:center; cursor:pointer; padding:6px 9px; background:var(--surface); border:1px solid var(--line); border-radius:999px; box-shadow:var(--shadow); color:var(--ink-2); transition:.13s}
+  .icon-btn:hover{color:var(--ink); border-color:#cfd6df}
+  .icon-btn svg{width:15px; height:15px; display:block}
+  .i-sun{display:none}
+  :root[data-theme="dark"] .i-sun{display:block}
+  :root[data-theme="dark"] .i-moon{display:none}
+
+  .grid{display:grid; grid-template-columns:1.05fr 0.95fr; gap:22px; align-items:start}
+  @media(max-width:880px){.grid{grid-template-columns:1fr}}
+
+  .card{background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow)}
+  .card .pad{padding:22px}
+  .card + .card{margin-top:22px}
+  .card-head{display:flex; align-items:center; gap:10px; padding:16px 22px; border-bottom:1px solid var(--line-2)}
+  .card-head h2{font-size:13px; font-weight:600; margin:0; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-2)}
+  .card-head .tag-n{margin-left:auto; font-family:var(--mono); font-size:12px; color:var(--muted)}
+
+  .seg{display:flex; background:var(--surface-2); border:1px solid var(--line); border-radius:11px; padding:4px; margin-bottom:18px}
+  .seg button{flex:1; border:0; background:none; padding:10px; font:inherit; font-weight:600; font-size:13.5px; color:var(--muted); border-radius:8px; cursor:pointer; transition:.14s}
+  .seg button[aria-selected="true"]{background:var(--surface); color:var(--ink); box-shadow:0 1px 2px rgba(16,20,27,.08)}
+
+  label.fld{display:block; font-size:11.5px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin:0 0 7px}
+  input,textarea,select{width:100%; padding:11px 13px; font:inherit; font-size:14px; background:var(--surface-2); border:1px solid var(--line); border-radius:10px; color:var(--ink); transition:.12s}
+  select{appearance:none; -webkit-appearance:none; cursor:pointer; font-family:var(--mono); font-size:13px;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' fill='none' stroke='%236c7783' stroke-width='1.5'/></svg>");
+    background-repeat:no-repeat; background-position:right 13px center; padding-right:34px}
+  input:hover,textarea:hover,select:hover{border-color:#d3d9e2}
+  input:focus,textarea:focus,select:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); background:var(--surface)}
+  input.mono,textarea{font-family:var(--mono)}
+  textarea{min-height:80px; resize:vertical; line-height:1.5}
+  .row{display:flex; gap:14px}
   .row>div{flex:1}
-  .blk{margin-bottom:16px}
-  .hint{font-size:12px; color:var(--muted); margin-top:6px; font-family:var(--mono)}
-  .divider{height:1px; background:var(--line); margin:4px 0 18px}
-  .chk{display:flex; align-items:center; gap:9px; font-size:13px; font-weight:500; color:var(--ink); margin-bottom:10px; cursor:pointer}
-  .chk input{width:auto; margin:0}
-  button.go{width:100%; margin-top:8px; padding:14px; font:inherit; font-weight:700; font-size:15px; color:var(--ink); background:var(--yellow); border:1px solid #d8b400; border-radius:9px; cursor:pointer; transition:filter .12s}
-  button.go:hover{filter:brightness(.96)}
-  button.go:disabled{opacity:.5; cursor:not-allowed}
-  .readout{font-family:var(--mono); font-size:13px; color:var(--ink); background:var(--field); border:1px solid var(--line); border-radius:8px; padding:10px 12px; margin-top:14px}
+  .blk{margin-bottom:18px}
+  .blk:last-child{margin-bottom:0}
+  .hint{font-size:12px; color:var(--muted); margin-top:7px}
+  .divider{height:1px; background:var(--line-2); margin:6px 0 18px}
+  .tog-group{border:1px solid var(--line); border-radius:12px; overflow:hidden; background:var(--surface-2); margin-bottom:18px}
+  .tog{display:flex; align-items:center; gap:12px; padding:13px 15px; cursor:pointer; margin:0; user-select:none}
+  .tog + .tog{border-top:1px solid var(--line)}
+  .tog > div:first-child{flex:1}
+  .tog .lab{font-size:13.5px; font-weight:600; color:var(--ink)}
+  .tog .sub{font-size:11.5px; color:var(--muted); margin-top:2px}
+  .switch{position:relative; width:42px; height:24px; flex:none; display:inline-block}
+  .switch input{position:absolute; opacity:0; width:0; height:0}
+  .track{position:absolute; inset:0; background:var(--line); border-radius:999px; transition:.16s}
+  .track::before{content:''; position:absolute; left:3px; top:3px; width:18px; height:18px; background:#fff; border-radius:50%; transition:.16s; box-shadow:0 1px 3px rgba(0,0,0,.25)}
+  .switch input:checked + .track{background:var(--accent)}
+  .switch input:checked + .track::before{transform:translateX(18px)}
+
+  .subpanel{background:var(--surface-2); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:18px}
+  .subpanel .sp-h{font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin:0 0 14px}
+  .subpanel .row>div .fld{font-size:10.5px}
+  .subpanel input,.subpanel select{padding:9px 11px; font-size:13px}
+
+  .go{width:100%; margin-top:20px; padding:14px; font:inherit; font-weight:700; font-size:15px; color:#fff; background:var(--accent); border:0; border-radius:11px; cursor:pointer; transition:.13s; letter-spacing:.01em; box-shadow:0 1px 2px rgba(16,20,27,.12), 0 8px 18px oklch(0.55 0.15 264 / .22)}
+  .go:hover{background:var(--accent-press)}
+  .go:active{transform:translateY(1px)}
+  .go:disabled{opacity:.45; cursor:not-allowed; box-shadow:none}
+
+  .readout{font-family:var(--mono); font-size:12.5px; color:var(--ink-2); background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:11px 13px; margin-top:14px; min-height:42px; display:flex; align-items:center}
   .readout .warn{color:var(--red); font-weight:600}
-  .progress{height:8px; background:#e5e7eb; border-radius:999px; overflow:hidden; margin-top:10px; display:none}
-  .progress > div{height:100%; width:0%; background:var(--ink); transition:width .1s linear}
-  .pv-label{font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin-bottom:10px}
-  .tag{aspect-ratio:2/1; border:3px solid var(--red); border-radius:12px; background:#fff; padding:8px 10px;
-       display:grid; grid-template-columns:auto 1fr; grid-template-rows:auto 1fr auto; gap:2px 8px; align-items:center; color:#000}
-  .tag .h{grid-column:1/-1; grid-row:1; text-align:center; color:var(--red); font-weight:700; font-size:12px; line-height:1.15}
-  .tag #pvSym{grid-column:1; grid-row:2; align-self:center; justify-self:center}
-  .tag #pvSym img{height:46px; width:auto; display:block}
-  .tag #pvSym .ph-sym{font-size:10px; color:#bbb; font-style:italic}
-  .tag .mid{grid-column:2; grid-row:2; text-align:center}
-  .tag .site{font-family:var(--mono); font-weight:700; font-size:11px; letter-spacing:.06em; line-height:1; margin-bottom:2px}
-  .tag .num{font-family:var(--mono); font-weight:700; font-size:26px; line-height:1.1; color:#000}
-  .tag .logo{min-height:22px; margin-top:2px}
-  .tag .logo img{max-height:22px; max-width:116px; display:block; margin:0 auto}
-  .tag .logo .ph-text{font-size:10px; color:#999; font-style:italic}
-  .tag .ph{font-weight:700; font-size:12px; margin-top:2px; color:#000}
-  .tag #pvQR{grid-column:3; grid-row:2; display:none; align-items:center; justify-content:center; gap:3px}
-  .tag #pvQR img{width:auto; max-width:100%; max-height:58px; image-rendering:pixelated; display:block}
-  .tag #pvQR .aid-vert{writing-mode:vertical-rl; transform:rotate(180deg); font-family:var(--mono); font-weight:700; font-size:7px; letter-spacing:.04em; white-space:nowrap; line-height:1; color:var(--red)}
-  .tag.has-qr{grid-template-columns:auto 1fr auto}
-  .tag.has-qr #pvQR{display:flex}
-  .tag .f{grid-column:1/-1; grid-row:3; text-align:center; color:var(--red); font-weight:700; font-size:8px; letter-spacing:.02em}
-  .tag.compact{grid-template-rows:1fr auto}
-  .tag.compact .h, .tag.compact .logo, .tag.compact .ph, .tag.compact .site, .tag.compact #pvQR{display:none}
-  .tag.compact #pvSym{grid-row:1} .tag.compact #pvSym img{height:38px}
-  .tag.compact .mid{grid-row:1} .tag.compact .num{font-size:34px}
-  .tag.compact .f{grid-row:2}
-  .assetid{margin-top:14px; padding:10px 12px; background:var(--field); border:1px solid var(--line); border-radius:8px}
-  .aid-k{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--muted)}
+  .readout .good{color:var(--ok); font-weight:600}
+  .progress{height:7px; background:var(--line); border-radius:999px; overflow:hidden; margin-top:10px; display:none}
+  .progress > div{height:100%; width:0%; background:var(--accent); transition:width .1s linear}
+
+  .stats{display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line-2); border:1px solid var(--line-2); border-radius:12px; overflow:hidden}
+  .stat{background:var(--surface); padding:14px 16px}
+  .stat .k{font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--muted)}
+  .stat .v{font-family:var(--mono); font-size:21px; font-weight:600; margin-top:3px; letter-spacing:-.01em}
+
+  .pv-wrap{display:flex; flex-direction:column; align-items:center; gap:14px; padding:24px 22px}
+  .pv-stage{min-height:150px; display:flex; align-items:center; justify-content:center; width:100%}
+  #pvCanvas{box-shadow:0 2px 12px rgba(16,20,27,.12); border-radius:2px}
+  .pv-nav{display:flex; align-items:center; justify-content:center; gap:12px; width:100%}
+  .pv-arrow{width:30px; height:30px; flex:none; display:grid; place-items:center; border:1px solid var(--line); background:var(--surface); color:var(--ink-2); border-radius:8px; cursor:pointer; font-size:16px; line-height:1; transition:.12s}
+  .pv-arrow:hover:not(:disabled){border-color:var(--accent); color:var(--accent)}
+  .pv-arrow:disabled{opacity:.4; cursor:not-allowed}
+  .pv-pos{font-family:var(--mono); font-size:12px; color:var(--ink-2); min-width:170px; text-align:center}
+  .asset-hints{font-family:var(--mono); font-size:11.5px; color:var(--red); min-height:14px; text-align:center; width:100%}
+
+  .sheet-box{width:100%; max-width:210px}
+  .sheet-cap{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px}
+  .sheet-cap .t{font-size:11.5px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--muted)}
+  .sheet-cap .n{font-family:var(--mono); font-size:11.5px; color:var(--ink-2)}
+  .sheet{display:grid; grid-template-columns:repeat(2,1fr); gap:5px; padding:10px; background:var(--surface-2); border:1px solid var(--line); border-radius:10px}
+  #sheetCanvas{display:block; margin:0 auto; background:#fff; border:1px solid var(--line); border-radius:2px; box-shadow:0 1px 4px rgba(16,20,27,.10)}
+  .cell{aspect-ratio:2/1; border-radius:3px; background:var(--line); transition:background .15s}
+  .cell.on{background:var(--accent)}
+  .sheet-more{font-family:var(--mono); font-size:11px; color:var(--muted); text-align:center; margin-top:8px}
+
+  .foot-note{font-size:12px; color:var(--muted); line-height:1.55; padding:0 22px 22px}
+  .foot-note strong{color:var(--ink-2)}
+  .assetid{margin:0 22px 20px; padding:13px 15px; background:var(--surface-2); border:1px solid var(--line); border-radius:12px}
+  .aid-k{font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--muted)}
   .aid-sub{font-weight:500; text-transform:none; letter-spacing:0}
-  .aid-val{font-family:var(--mono); font-weight:700; font-size:16px; margin:3px 0 4px; color:var(--ink); word-break:break-all}
-  .aid-leg{font-size:11px; color:var(--muted); line-height:1.5} .aid-leg b{color:var(--ink); font-family:var(--mono)}
-  .note{font-size:12px; color:var(--muted); margin-top:12px}
-  .asset-hints{font-size:12px; color:var(--red); margin-top:8px; font-family:var(--mono); min-height:14px}
+  .aid-val{font-family:var(--mono); font-weight:600; font-size:17px; margin:4px 0 5px; color:var(--ink); word-break:break-all}
+  .aid-leg{font-size:11.5px; color:var(--muted); line-height:1.6}
+  .aid-leg b{color:var(--ink-2); font-family:var(--mono)}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <svg class="hazard" viewBox="0 0 100 90" aria-hidden="true">
-      <polygon points="50,6 96,84 4,84" fill="#FFD200" stroke="#111" stroke-width="7" stroke-linejoin="round"/>
-      <polygon points="56,30 33,54 47,54 41,74 67,44 53,44" fill="#111"/>
-    </svg>
+<div class="shell">
+  <div class="top">
+    <div class="mark">
+      <svg viewBox="0 0 100 90" aria-hidden="true">
+        <polygon points="50,6 96,84 4,84" fill="#FFD200" stroke="#fff" stroke-width="7" stroke-linejoin="round"/>
+        <polygon points="56,30 33,54 47,54 41,74 67,44 53,44" fill="#fff"/>
+      </svg>
+    </div>
     <div>
       <h1>Isolation Label Generator</h1>
-      <div class="ver" id="verBadge"></div>
+      <div class="meta">Pick a format, energy type &amp; company &middot; print-ready PDF tag sheets</div>
     </div>
-  </header>
-  <p class="sub">Pick a label format, energy type, and company; enter a range or specific tags; generate a print-ready sheet.</p>
+    <div class="right">
+      <span class="pill">Build <span id="buildDate"></span></span>
+      <span class="pill"><b id="verBadge"></b></span>
+      <button class="icon-btn" id="themeToggle" title="Toggle light / dark" aria-label="Toggle theme">
+        <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg>
+        <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6L19 19M19 5l-1.4 1.4M6.4 17.6L5 19"></path></svg>
+      </button>
+    </div>
+  </div>
 
   <div class="grid">
     <!-- Controls -->
-    <div class="card">
-      <div class="blk">
-        <label class="fld" for="format">Label format / paper</label>
-        <select id="format"></select>
-      </div>
+    <div>
+      <div class="card">
+        <div class="card-head"><h2>Label setup</h2></div>
+        <div class="pad">
+          <div class="blk">
+            <label class="fld" for="format">Label format / paper</label>
+            <select id="format"></select>
+          </div>
 
-      <div id="customBox" style="display:none">
-        <div class="row blk">
-          <div><label class="fld" for="cPage">Page</label><select id="cPage"><option value="letter">Letter (8.5×11)</option><option value="a4">A4 (210×297mm)</option></select></div>
-          <div><label class="fld" for="cContent">Content</label><select id="cContent"><option value="iso">Full isolation</option><option value="compact">Compact (number)</option></select></div>
+          <div id="customBox" class="subpanel" style="display:none">
+            <p class="sp-h">Custom sheet builder</p>
+            <div class="row blk">
+              <div><label class="fld" for="cPage">Page</label><select id="cPage"><option value="letter">Letter (8.5×11)</option><option value="a4">A4 (210×297mm)</option></select></div>
+              <div><label class="fld" for="cContent">Content</label><select id="cContent"><option value="iso">Full isolation</option><option value="compact">Compact (number)</option></select></div>
+            </div>
+            <div class="row blk">
+              <div><label class="fld" for="cW">Label width (in)</label><input id="cW" class="mono" type="number" step="0.01" value="4"></div>
+              <div><label class="fld" for="cH">Label height (in)</label><input id="cH" class="mono" type="number" step="0.01" value="2"></div>
+            </div>
+            <div class="row blk">
+              <div><label class="fld" for="cCols">Columns</label><input id="cCols" class="mono" type="number" value="2"></div>
+              <div><label class="fld" for="cRows">Rows</label><input id="cRows" class="mono" type="number" value="5"></div>
+            </div>
+            <div class="row blk">
+              <div><label class="fld" for="cMT">Top margin (in)</label><input id="cMT" class="mono" type="number" step="0.01" value="0.5"></div>
+              <div><label class="fld" for="cML">Left margin (in)</label><input id="cML" class="mono" type="number" step="0.01" value="0.15625"></div>
+            </div>
+            <div class="row blk">
+              <div><label class="fld" for="cGX">Column gap (in)</label><input id="cGX" class="mono" type="number" step="0.01" value="0.1875"></div>
+              <div><label class="fld" for="cGY">Row gap (in)</label><input id="cGY" class="mono" type="number" step="0.01" value="0"></div>
+            </div>
+            <div class="row blk">
+              <div><label class="fld" for="cR">Corner radius (in)</label><input id="cR" class="mono" type="number" step="0.01" value="0.125"></div>
+              <div></div>
+            </div>
+            <div class="hint">Placement is top-left + gaps; right/bottom margins are whatever's left on the sheet. Test-print before a real run.</div>
+          </div>
+
+          <div class="row blk">
+            <div><label class="fld" for="energy">Energy type</label><select id="energy"></select></div>
+            <div><label class="fld" for="company">Company</label><select id="company"></select></div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="seg" role="tablist">
+            <button id="tabRange" role="tab" aria-selected="true">Number range</button>
+            <button id="tabList" role="tab" aria-selected="false">Specific tags</button>
+          </div>
+
+          <div id="rangeFields">
+            <div class="row blk">
+              <div><label class="fld" for="start">From</label><input id="start" class="mono" type="number" value="1"></div>
+              <div><label class="fld" for="end">To</label><input id="end" class="mono" type="number" value="1000"></div>
+            </div>
+          </div>
+
+          <div id="listFields" style="display:none">
+            <div class="blk">
+              <label class="fld" for="list">Tag numbers</label>
+              <textarea id="list" placeholder="42, 108, 511">42, 108, 511</textarea>
+              <div class="hint">For reprints &mdash; comma or space separated, enter only the tags you need.</div>
+            </div>
+          </div>
+
+          <div class="row blk">
+            <div><label class="fld" for="prefix">Prefix</label><input id="prefix" class="mono" value="E-"></div>
+            <div><label class="fld" for="pad">Pad to digits</label><input id="pad" class="mono" type="number" value="4" min="0" max="8"></div>
+          </div>
+
+          <div class="blk">
+            <label class="fld" for="phone">Phone</label>
+            <input id="phone" class="mono" value="+1 657-502-6544">
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="blk">
+            <label class="fld" for="site">Site code</label>
+            <input id="site" class="mono" placeholder="YVR6" value="">
+            <div class="hint">Location code &mdash; feeds the optional label line and the QR asset ID.</div>
+          </div>
+
+          <div class="tog-group">
+            <label class="tog">
+              <div><div class="lab">Site code line</div><div class="sub">Small line above the tag number</div></div>
+              <span class="switch"><input type="checkbox" id="showSite"><span class="track"></span></span>
+            </label>
+            <label class="tog">
+              <div><div class="lab">QR asset tag</div><div class="sub">Scannable ID &middot; centers the layout</div></div>
+              <span class="switch"><input type="checkbox" id="showQR"><span class="track"></span></span>
+            </label>
+          </div>
+
+          <div id="qrYearRow" class="blk" style="display:none">
+            <label class="fld" for="qrYear">Asset ID year</label>
+            <input id="qrYear" class="mono" type="number" value="2026">
+            <div class="hint" id="assetPreview"></div>
+          </div>
+
+          <button class="go" id="go">Generate PDF</button>
+          <div class="readout" id="readout"></div>
+          <div class="progress" id="progress"><div id="progressBar"></div></div>
         </div>
-        <div class="row blk">
-          <div><label class="fld" for="cW">Label width (in)</label><input id="cW" class="mono" type="number" step="0.01" value="4"></div>
-          <div><label class="fld" for="cH">Label height (in)</label><input id="cH" class="mono" type="number" step="0.01" value="2"></div>
-        </div>
-        <div class="row blk">
-          <div><label class="fld" for="cCols">Columns</label><input id="cCols" class="mono" type="number" value="2"></div>
-          <div><label class="fld" for="cRows">Rows</label><input id="cRows" class="mono" type="number" value="5"></div>
-        </div>
-        <div class="row blk">
-          <div><label class="fld" for="cMT">Top margin (in)</label><input id="cMT" class="mono" type="number" step="0.01" value="0.5"></div>
-          <div><label class="fld" for="cML">Left margin (in)</label><input id="cML" class="mono" type="number" step="0.01" value="0.15625"></div>
-        </div>
-        <div class="row blk">
-          <div><label class="fld" for="cGX">Column gap (in)</label><input id="cGX" class="mono" type="number" step="0.01" value="0.1875"></div>
-          <div><label class="fld" for="cGY">Row gap (in)</label><input id="cGY" class="mono" type="number" step="0.01" value="0"></div>
-        </div>
-        <div class="row blk">
-          <div><label class="fld" for="cR">Corner radius (in)</label><input id="cR" class="mono" type="number" step="0.01" value="0.125"></div>
-          <div></div>
-        </div>
-        <div class="hint">Placement is top-left + gaps; right/bottom margins are whatever's left on the sheet.</div>
       </div>
-
-      <div class="row blk">
-        <div><label class="fld" for="energy">Energy type</label><select id="energy"></select></div>
-        <div><label class="fld" for="company">Company</label><select id="company"></select></div>
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="seg" role="tablist">
-        <button id="tabRange" role="tab" aria-selected="true">Number range</button>
-        <button id="tabList" role="tab" aria-selected="false">Specific tags</button>
-      </div>
-
-      <div id="rangeFields">
-        <div class="row blk">
-          <div><label class="fld" for="start">From</label><input id="start" class="mono" type="number" value="1"></div>
-          <div><label class="fld" for="end">To</label><input id="end" class="mono" type="number" value="1000"></div>
-        </div>
-      </div>
-
-      <div id="listFields" style="display:none">
-        <div class="blk">
-          <label class="fld" for="list">Tag numbers (comma or space separated)</label>
-          <textarea id="list" placeholder="42, 108, 511">42, 108, 511</textarea>
-          <div class="hint">For reprints — enter only the tags you need.</div>
-        </div>
-      </div>
-
-      <div class="row blk">
-        <div><label class="fld" for="prefix">Prefix</label><input id="prefix" class="mono" value="E-"></div>
-        <div><label class="fld" for="pad">Pad to digits</label><input id="pad" class="mono" type="number" value="4" min="0" max="8"></div>
-      </div>
-
-      <div class="blk">
-        <label class="fld" for="phone">Phone</label>
-        <input id="phone" class="mono" value="+1 657-502-6544">
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="row blk">
-        <div><label class="fld" for="siteCode">Site code</label><input id="siteCode" class="mono" value="YVR6" placeholder="e.g., YVR6"></div>
-        <div><label class="fld" for="qrYear">Year</label><input id="qrYear" class="mono" value="2026"></div>
-      </div>
-      <div class="blk">
-        <label class="chk"><input type="checkbox" id="optSite"> Show site code above the number</label>
-        <label class="chk"><input type="checkbox" id="optQR"> Add scannable QR + asset ID</label>
-      </div>
-      <div class="asset-hints" id="assetPreview"></div>
-
-      <button class="go" id="go">Generate PDF</button>
-      <div class="readout" id="readout"></div>
-      <div class="progress" id="progress"><div id="progressBar"></div></div>
     </div>
 
-    <!-- Live preview -->
-    <div class="card">
-      <div class="pv-label">Preview</div>
-      <div class="tag" id="tag">
-        <div class="h" id="pvHeader">Electrical Energy Isolation Point</div>
-        <div id="pvSym"><span class="ph-sym">[ symbol ]</span></div>
-        <div class="mid">
-          <div class="site" id="pvSite" style="display:none">YVR6</div>
-          <div class="num" id="pvNum">E-0001</div>
-          <div class="logo" id="pvLogo"><span class="ph-text">[ logo ]</span></div>
-          <div class="ph" id="pvPhone">+1 657-502-6544</div>
+    <!-- Preview + stats -->
+    <div>
+      <div class="card">
+        <div class="card-head"><h2>Live preview</h2><span class="tag-n" id="previewOf"></span></div>
+        <div class="pv-wrap">
+          <div class="pv-stage"><canvas id="pvCanvas"></canvas></div>
+          <div class="pv-nav" id="pvNav" style="display:none">
+            <button class="pv-arrow" id="pvPrev" aria-label="Previous label">&lsaquo;</button>
+            <span class="pv-pos" id="pvPos">Label 1 of 1</span>
+            <button class="pv-arrow" id="pvNext" aria-label="Next label">&rsaquo;</button>
+          </div>
+          <div class="asset-hints" id="assetHints"></div>
+          <div class="sheet-box">
+            <div class="sheet-cap"><span class="t">Sheet layout</span><span class="n" id="sheetLabel">Sheet 1</span></div>
+            <canvas id="sheetCanvas"></canvas>
+            <div class="sheet-more" id="sheetMore"></div>
+          </div>
         </div>
-        <div id="pvQR"><img id="pvQRimg" alt=""><span class="aid-vert" id="pvAidVert"></span></div>
-        <div class="f" id="pvFooter">DO NOT REMOVE THIS TAG</div>
+        <div class="assetid">
+          <div class="aid-k">Asset ID <span class="aid-sub">(encoded in the QR when enabled)</span></div>
+          <div class="aid-val" id="aidVal">&mdash;</div>
+          <div class="aid-leg" id="aidLeg"></div>
+        </div>
+        <div class="foot-note">
+          Preview is rendered with the same routine as the PDF &mdash; theme, symbol &amp; logo included. <strong>Test-print each format on its real stock at 100% scale</strong> before a production run.
+        </div>
       </div>
 
-      <div class="assetid">
-        <div class="aid-k">Asset ID <span class="aid-sub">(encoded in the QR when enabled)</span></div>
-        <div class="aid-val" id="aidVal">YVR6-E-0001-26</div>
-        <div class="aid-leg" id="aidLeg"></div>
+      <div class="card">
+        <div class="pad" style="padding:18px">
+          <div class="stats">
+            <div class="stat"><div class="k">Labels</div><div class="v" id="statCount">0</div></div>
+            <div class="stat"><div class="k">Sheets</div><div class="v" id="statSheets">0</div></div>
+            <div class="stat"><div class="k">Last tag</div><div class="v" id="statLast" style="font-size:17px">&mdash;</div></div>
+          </div>
+        </div>
       </div>
-
-      <div class="asset-hints" id="assetHints"></div>
-      <p class="note"><strong>Test-print each format on its real stock at 100% scale</strong> before a production run.</p>
     </div>
   </div>
 </div>
@@ -216,21 +321,26 @@
 <script>
 /* =========================================================================
    ISOLATION LABEL GENERATOR  —  client-side, no server required.
+   Renders print-ready PDFs in the browser with jsPDF.
 
-   v1.6.0:
-     - Asset ID format: {site}-{prefix}{number}-{YY}  (e.g. YVR6-E-0007-26)
-     - When QR is on, the human-readable asset ID also prints VERTICALLY along
-       the right edge beside the QR.
-     - A labeled Asset ID breakdown shows under the preview.
+   v1.5.0 — same data-driven config & themes as 1.4.0, restyled UI, and a
+   CANVAS PREVIEW driven by the exact same drawing routine as the PDF (themes,
+   symbols, logos, background fills all render true). Adds Labels/Sheets/Last-tag
+   stats, a sheet-fill diagram, Enter-to-generate, and remembered settings.
 
-   CONFIG (data-driven): THEMES, ENERGY_TYPES, COMPANIES, LAYOUTS.
-   ASSETS load by relative path; serve with /assets beside the file.
-   QR library: qrcode-generator (cdnjs); skipped with a warning if it fails.
+   CONFIG (data-driven — edit these, drop matching files in /assets):
+     THEMES        -> color (perimeter/header/footer), bg (fill), num (number)
+     ENERGY_TYPES  -> header text, symbol, prefix/pad, default brand, theme
+     COMPANIES     -> logo + default phone
+     LAYOUTS       -> page size, grid, label size, margins, gaps (Avery presets + Custom)
+   ASSETS load by relative path; serve /assets beside this file (GitHub Pages).
    ========================================================================= */
-const VERSION = "1.6.0";
+const VERSION = "2.0.1";
 const BUILD_DATE = "2026-06-17";
 const PT = 72;
+const LS = 'ilg.settings';
 
+/* --- THEMES: color = perimeter+header+footer (and number unless num given); bg = fill --- */
 const THEMES = {
   red:    { color:[225,37,27],  bg:[255,255,255], num:[0,0,0] },
   orange: { color:[224,126,52], bg:[255,255,255] },
@@ -238,6 +348,8 @@ const THEMES = {
   black:  { color:[17,17,17],   bg:[246,209,20] },
   teal:   { color:[58,184,170], bg:[255,255,255] }
 };
+
+/* --- ENERGY TYPES --- */
 const ENERGY_TYPES = {
   electrical: { label:"Electrical", prefix:"E-",  pad:4, company:"psg",   theme:"red",    symbol:"assets/symbols/electrical.svg" },
   gas:        { label:"Gas",        prefix:"G-",  pad:3, company:"psg",   theme:"orange", symbol:"assets/symbols/gas.svg" },
@@ -246,11 +358,16 @@ const ENERGY_TYPES = {
   water:      { label:"Water",      prefix:"W-",  pad:3, company:"psg",   theme:"teal",   symbol:"assets/symbols/water.svg" },
   hydraulic:  { label:"Hydraulic",  prefix:"H-",  pad:4, company:"magna", theme:"blue",   symbol:"assets/symbols/hydraulic.svg" }
 };
+
+/* --- COMPANIES: logo + default phone --- */
 const COMPANIES = {
   psg:   { label:"Power Solutions Group", logo:"assets/logos/pgs-logo.jpg",   fmt:"JPEG", phone:"+1 657-502-6544" },
   magna: { label:"Magna IV Engineering",  logo:"assets/logos/magna-logo.png", fmt:"PNG",  phone:"+1 604-421-8020" }
 };
+
+/* --- LAYOUTS: sizes in INCHES. content 'iso' = full tag, 'compact' = number-first --- */
 const LAYOUTS = {
+  ol996wj:   { name:'Isolation — 2" × 3" (10-up, OnlineLabels OL996WJ)', avery:'OL996WJ', page:'letter', cols:2, rows:5,  labelW:3,     labelH:2,     mL:1.1875,  mT:0.25, gX:0.125, gY:0.125, content:'iso' },
   iso_5163:  { name:'Isolation — 2" × 4" (10-up, Avery 5163/8163)',     avery:'5163', page:'letter', cols:2, rows:5,  labelW:4,     labelH:2,     mL:0.15625, mT:0.5, gX:0.1875, gY:0, content:'iso' },
   warn_5164: { name:'Large warning — 3⅓" × 4" (6-up, Avery 5164/8164)', avery:'5164', page:'letter', cols:2, rows:3,  labelW:4,     labelH:3.333, mL:0.15625, mT:0.5, gX:0.1875, gY:0, content:'iso' },
   id_5160:   { name:'Small asset ID — 1" × 2⅝" (30-up, Avery 5160/8160)', avery:'5160', page:'letter', cols:3, rows:10, labelW:2.625, labelH:1,   mL:0.1875,  mT:0.5, gX:0.125,  gY:0, content:'compact' },
@@ -259,7 +376,11 @@ const LAYOUTS = {
 
 const BLACK=[0,0,0], GREY=[150,150,150];
 
-let mode='range', curFormat='iso_5163', curEnergy='electrical', curCompany='psg';
+let mode='range', curFormat='ol996wj', curEnergy='electrical', curCompany='psg';
+let pvIndex=0;
+function previewNums(){ return getNumbers().nums; }
+function clampPvIndex(){ const n=previewNums().length; if(pvIndex<0)pvIndex=0; if(n && pvIndex>n-1)pvIndex=n-1; if(!n)pvIndex=0; }
+function currentPreviewNum(){ const nums=previewNums(); clampPvIndex(); return nums.length?nums[pvIndex]:0; }
 const symCache={}, logoCache={};
 const $ = id => document.getElementById(id);
 const num = (v,d)=>{ const x=parseFloat(v); return isFinite(x)?x:d; };
@@ -267,7 +388,31 @@ const clampInt = (v,lo,hi,d)=>{ let x=parseInt(v,10); if(!isFinite(x))x=d; retur
 const rgb = a => `rgb(${a[0]},${a[1]},${a[2]})`;
 const isWhite = a => a[0]===255 && a[1]===255 && a[2]===255;
 const theme = t => THEMES[t.theme] || THEMES.red;
-const qrLoaded = () => (typeof qrcode !== 'undefined');
+
+/* ---------- pens: one drawing routine targets either jsPDF or a 2D canvas ---------- */
+function pdfPen(doc){
+  return {
+    fillRoundRect(x,y,w,h,r,a){ doc.setFillColor(a[0],a[1],a[2]); doc.roundedRect(x,y,w,h,r,r,'F'); },
+    strokeRoundRect(x,y,w,h,r,a,lw){ doc.setDrawColor(a[0],a[1],a[2]); doc.setLineWidth(lw); doc.roundedRect(x,y,w,h,r,r,'S'); },
+    text(s,x,y,size,a,align,bold,maxW){ doc.setFont('helvetica',bold?'bold':'normal'); doc.setFontSize(size); doc.setTextColor(a[0],a[1],a[2]); const o={align:align||'left'}; if(maxW)o.maxWidth=maxW; doc.text(s,x,y,o); },
+    fillRect(x,y,w,h,a){ doc.setFillColor(a[0],a[1],a[2]); doc.rect(x,y,w,h,'F'); },
+    measure(s,size,bold){ doc.setFont('helvetica',bold?'bold':'normal'); doc.setFontSize(size); return doc.getTextWidth(s); },
+    textRot(s,x,y,size,a,bold){ doc.setFont('helvetica',bold?'bold':'normal'); doc.setFontSize(size); doc.setTextColor(a[0],a[1],a[2]); doc.text(s,x,y,{angle:90}); },
+    fitImage(obj,type,bx,by,bw,bh,alias){ let w=bw,h=bw/obj.aspect; if(h>bh){h=bh;w=bh*obj.aspect;} doc.addImage(obj.dataURL,type,bx+(bw-w)/2,by+(bh-h)/2,w,h,alias,'FAST'); }
+  };
+}
+function roundRectPath(ctx,x,y,w,h,r){ r=Math.max(0,Math.min(r,w/2,h/2)); ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function canvasPen(ctx,S){
+  return {
+    fillRoundRect(x,y,w,h,r,a){ ctx.fillStyle=rgb(a); roundRectPath(ctx,x*S,y*S,w*S,h*S,r*S); ctx.fill(); },
+    strokeRoundRect(x,y,w,h,r,a,lw){ ctx.strokeStyle=rgb(a); ctx.lineWidth=Math.max(0.5,lw*S); roundRectPath(ctx,x*S,y*S,w*S,h*S,r*S); ctx.stroke(); },
+    text(s,x,y,size,a,align,bold,maxW){ ctx.font=`${bold?'bold ':''}${size*S}px Helvetica,Arial,sans-serif`; ctx.fillStyle=rgb(a); ctx.textAlign=align||'left'; ctx.textBaseline='alphabetic'; if(maxW) ctx.fillText(s,x*S,y*S,maxW*S); else ctx.fillText(s,x*S,y*S); },
+    fillRect(x,y,w,h,a){ ctx.fillStyle=rgb(a); ctx.fillRect(x*S,y*S,w*S,h*S); },
+    measure(s,size,bold){ ctx.font=`${bold?'bold ':''}${size*S}px Helvetica,Arial,sans-serif`; return ctx.measureText(s).width/S; },
+    textRot(s,x,y,size,a,bold){ ctx.save(); ctx.translate(x*S,y*S); ctx.rotate(-Math.PI/2); ctx.font=`${bold?'bold ':''}${size*S}px Helvetica,Arial,sans-serif`; ctx.fillStyle=rgb(a); ctx.textAlign='left'; ctx.textBaseline='alphabetic'; ctx.fillText(s,0,0); ctx.restore(); },
+    fitImage(obj,type,bx,by,bw,bh){ let w=bw,h=bw/obj.aspect; if(h>bh){h=bh;w=bh*obj.aspect;} const src=obj.canvas||obj.img; if(src){ try{ ctx.drawImage(src,(bx+(bw-w)/2)*S,(by+(bh-h)/2)*S,w*S,h*S);}catch(e){} } }
+  };
+}
 
 /* ---------- asset loading ---------- */
 function loadImage(src){ return new Promise((ok,no)=>{ const im=new Image(); im.onload=()=>ok(im); im.onerror=()=>no(new Error(src)); im.src=src; }); }
@@ -280,7 +425,7 @@ async function svgToCanvas(src){
   const img=await loadImage(url);
   const cv=document.createElement('canvas'); cv.width=w; cv.height=h; cv.getContext('2d').drawImage(img,0,0,w,h);
   URL.revokeObjectURL(url);
-  return { dataURL: cv.toDataURL('image/png'), aspect };
+  return { dataURL: cv.toDataURL('image/png'), aspect, canvas:cv };
 }
 async function ensureSymbol(type){
   if(type in symCache) return symCache[type];
@@ -293,73 +438,29 @@ async function ensureLogo(co){
     const im=await loadImage(COMPANIES[co].logo);
     const cv=document.createElement('canvas'); cv.width=im.naturalWidth; cv.height=im.naturalHeight; cv.getContext('2d').drawImage(im,0,0);
     const mime=COMPANIES[co].fmt==='PNG'?'image/png':'image/jpeg';
-    logoCache[co]={ dataURL:cv.toDataURL(mime), aspect:im.naturalWidth/im.naturalHeight };
+    logoCache[co]={ dataURL:cv.toDataURL(mime), aspect:im.naturalWidth/im.naturalHeight, img:im };
   }catch(e){ logoCache[co]=null; }
   return logoCache[co];
 }
-
-/* ---------- QR + asset ID ---------- */
-let _qrCv = null;
-function makeQR(text){
-  const qr = qrcode(0, 'M');
-  qr.addData(text); qr.make();
-  const n = qr.getModuleCount(), scale = 8, margin = 4, size = (n + margin*2) * scale;
-  if(!_qrCv) _qrCv = document.createElement('canvas');
-  _qrCv.width = size; _qrCv.height = size;
-  const ctx = _qrCv.getContext('2d');
-  ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0,0,size,size);
-  ctx.fillStyle = '#000000';
-  for(let r=0;r<n;r++) for(let col=0;col<n;col++) if(qr.isDark(r,col)) ctx.fillRect((col+margin)*scale,(r+margin)*scale,scale,scale);
-  return _qrCv.toDataURL('image/png');
-}
-function padBody(n){ const pad=parseInt($('pad').value,10)||0; return pad>0?String(n).padStart(pad,'0'):String(n); }
-function fmt(n){ return ($('prefix').value||'')+padBody(n); }
-function yy(){ const yr=($('qrYear').value||'').trim(); return yr.length>2 ? yr.slice(-2) : yr; }
-function assetID(n){ return [($('siteCode').value||'').trim(), fmt(n), yy()].filter(Boolean).join('-'); }
 
 /* ---------- selections ---------- */
 async function applyEnergy(){
   const t=ENERGY_TYPES[curEnergy];
   $('prefix').value=t.prefix; $('pad').value=t.pad;
-  $('pvHeader').textContent=`${t.label} Energy Isolation Point`;
-  applyTheme(t);
   curCompany=t.company; $('company').value=curCompany;
-  const s=await ensureSymbol(curEnergy); setSymbolPreview(!!s,t.symbol);
+  await ensureSymbol(curEnergy);
   await applyCompany();
-}
-function applyTheme(t){
-  const th=theme(t), col=rgb(th.color), bg=rgb(th.bg||[255,255,255]), nu=rgb(th.num||th.color);
-  const tag=$('tag');
-  tag.style.borderColor=col; tag.style.background=bg;
-  $('pvHeader').style.color=col; $('pvNum').style.color=nu;
-  $('pvSite').style.color=col; $('pvFooter').style.color=col; $('pvAidVert').style.color=col;
-  $('pvPhone').style.color='rgb(0,0,0)';
 }
 async function applyCompany(){
   const c=COMPANIES[curCompany];
   $('phone').value=c.phone;
-  const l=await ensureLogo(curCompany); setLogoPreview(!!l,c.logo);
+  await ensureLogo(curCompany);
   refresh();
 }
 function applyFormat(){
   $('customBox').style.display = LAYOUTS[curFormat].custom ? '' : 'none';
-  const L=currentLayout();
-  const tag=$('tag');
-  tag.style.aspectRatio = `${L.labelW}/${L.labelH}`;
-  tag.classList.toggle('compact', L.content==='compact');
+  buildSheet();
   refresh();
-}
-function setSymbolPreview(ok,path){
-  const w=$('pvSym');
-  if(ok){ w.innerHTML=''; const im=document.createElement('img'); im.src=path; im.alt='symbol'; w.appendChild(im); }
-  else  { w.innerHTML='<span class="ph-sym">[ symbol ]</span>'; }
-  updateHints();
-}
-function setLogoPreview(ok,path){
-  const w=$('pvLogo');
-  if(ok){ w.innerHTML=''; const im=document.createElement('img'); im.src=path; im.alt='logo'; w.appendChild(im); }
-  else  { w.innerHTML='<span class="ph-text">[ logo ]</span>'; }
-  updateHints();
 }
 function updateHints(){
   const miss=[];
@@ -402,148 +503,216 @@ function getNumbers(){
   if(!nums.length) return {nums:[], err:'Enter at least one tag number.'};
   return {nums};
 }
+function padBody(n){ const pad=parseInt($('pad').value,10)||0; return pad>0?String(n).padStart(pad,'0'):String(n); }
+function fmt(n){ return ($('prefix').value||'')+padBody(n); }
+function yy(){ const yr=($('qrYear').value||'').trim(); return yr.length>2 ? yr.slice(-2) : yr; }
+function fitFont(pen, text, maxW, startPt, minPt){ let fs=startPt, g=0; while(fs>minPt && pen.measure(text, fs, true) > maxW && g++<300) fs-=0.5; return fs; }
 
-/* ---------- preview + readout ---------- */
-function refresh(){
-  const {nums,err}=getNumbers();
-  const first = nums.length ? nums[0] : 0;
-  const L=currentLayout(), isIso = L.content!=='compact';
-
-  // options
-  const site = ($('siteCode').value||'').trim();
-  const showSite = $('optSite').checked && !!site && isIso;
-  let showQR = $('optQR').checked && isIso && qrLoaded();
-
-  // site line
-  $('pvSite').textContent = site;
-  $('pvSite').style.display = showSite ? '' : 'none';
-
-  // number + phone
-  $('pvNum').textContent = fmt(first);
-  $('pvPhone').textContent = $('phone').value || '';
-
-  // asset ID legend (always)
-  const stRaw=site, enRaw=($('prefix').value||'').replace(/-+$/,'');
-  $('aidVal').textContent = assetID(first);
-  $('aidLeg').innerHTML = `<b>${stRaw||'—'}</b> site &middot; <b>${enRaw||'—'}</b> energy &middot; <b>${padBody(first)}</b> asset&nbsp;no. &middot; <b>${yy()||'—'}</b> year`;
-
-  // QR + vertical id
-  const tag=$('tag');
-  tag.classList.toggle('has-qr', showQR);
-  if(showQR){
-    try{ $('pvQRimg').src = makeQR(assetID(first)); }catch(e){ $('pvQRimg').removeAttribute('src'); }
-    $('pvAidVert').textContent = assetID(first);
-  } else { $('pvQRimg').removeAttribute('src'); $('pvAidVert').textContent=''; }
-
-  // QR warnings (controls side)
-  let warn='';
-  if($('optQR').checked && !isIso) warn='QR/site code apply to full-tag formats, not the small ID label.';
-  else if($('optQR').checked && !qrLoaded()) warn='QR library did not load; QR will be skipped.';
-  $('assetPreview').textContent = warn;
-
-  // readout
-  const ro=$('readout'), go=$('go');
-  if(err){ ro.innerHTML=`<span class="warn">${err}</span>`; go.disabled=true; return; }
-  go.disabled=false;
-  const per=Math.max(1,L.cols*L.rows), sheets=Math.ceil(nums.length/per);
-  const name = LAYOUTS[curFormat].custom ? `custom ${L.labelW}"×${L.labelH}" (${per}/sheet)` : LAYOUTS[curFormat].name;
-  ro.innerHTML = `${nums.length} label${nums.length!==1?'s':''} &middot; ${sheets} sheet${sheets!==1?'s':''} &middot; ${name}`;
-}
-
-/* ---------- content drawers ---------- */
-function placeAlias(doc, data, type, aspect, bx, by, bw, bh, alias){
-  let w=bw, h=bw/aspect; if(h>bh){ h=bh; w=bh*aspect; }
-  doc.addImage(data, type, bx+(bw-w)/2, by+(bh-h)/2, w, h, alias, 'FAST');
-}
-function fitFont(doc, text, maxW, startPt, minPt){
-  let fs=startPt; doc.setFontSize(fs); let g=0;
-  while(fs>minPt && doc.getTextWidth(text) > maxW && g++<200){ fs-=0.5; doc.setFontSize(fs); }
-  return fs;
-}
-function drawIso(doc,x,y,w,h,c){
+/* ---------- content drawers (theme-aware, scale to the label box; pen = PDF or canvas) ---------- */
+function drawIso(pen,x,y,w,h,c){
   const cx=x+w/2, ins=h*0.045, r=(c.radius!=null?c.radius:h*0.0625);
-  if(!isWhite(c.bg)){ doc.setFillColor(...c.bg); doc.roundedRect(x+h*0.015,y+h*0.015,w-h*0.03,h-h*0.03,h*0.075,h*0.075,'F'); }
-  doc.setDrawColor(...c.col); doc.setLineWidth(Math.max(1,h*0.015));
-  doc.roundedRect(x+ins,y+ins,w-2*ins,h-2*ins,r,r,'S');
-  // header (fit to one line)
-  doc.setTextColor(...c.col); doc.setFont('helvetica','bold');
-  doc.setFontSize(fitFont(doc,c.header,w*0.92,h*0.072,h*0.04));
-  doc.text(c.header,cx,y+h*0.155,{align:'center'});
-  // symbol left
-  if(c.sym) placeAlias(doc,c.sym.dataURL,'PNG',c.sym.aspect,x+w*0.08,y+h*0.30,w*0.24,h*0.42,c.symAlias);
-  // QR + vertical asset ID (right), optional
-  let qrX=null, qs=0, vstrip=0;
-  if(c.showQR && c.qr){
-    vstrip=h*0.10; qs=Math.min(w*0.22,h*0.52);
-    qrX=x+w-ins-vstrip-qs; const qrY=y+(h-qs)/2;
-    doc.addImage(c.qr,'PNG',qrX,qrY,qs,qs);
-    if(c.assetText){
-      doc.setTextColor(...c.col); doc.setFont('helvetica','bold');
-      doc.setFontSize(fitFont(doc,c.assetText,(h-2*ins)*0.94,h*0.05,h*0.03));
-      const W=doc.getTextWidth(c.assetText);
-      doc.text(c.assetText, x+w-ins-vstrip*0.42, y+(h+W)/2, {angle:90});
+  if(!isWhite(c.bg)) pen.fillRoundRect(x+h*0.015,y+h*0.015,w-h*0.03,h-h*0.03,h*0.075,c.bg);
+  pen.strokeRoundRect(x+ins,y+ins,w-2*ins,h-2*ins,r,c.col,Math.max(1,h*0.015));
+  // header (auto-fit to one line)
+  pen.text(c.header,cx,y+h*0.150, fitFont(pen,c.header,w*0.92,h*0.072,h*0.04), c.col,'center',true);
+
+  // vertical content band between header and footer
+  const bandTop=y+h*0.225, bandBot=y+h*0.855, bandCy=(bandTop+bandBot)/2, bandH=bandBot-bandTop;
+
+  // energy symbol (left)
+  const symBoxH=h*0.42;
+  if(c.sym) pen.fitImage(c.sym,'PNG', x+w*0.075, bandCy-symBoxH/2, w*0.22, symBoxH, c.symAlias);
+
+  // QR (right) + human-readable asset id running vertically along the edge
+  let qrX=null, qrS=0; const vstrip=h*0.085;
+  if(c.qr){
+    qrS=Math.min(bandH*0.82, w*0.235);
+    qrX=x+w-ins-vstrip-qrS; const qrY=bandCy-qrS/2;
+    drawQR(pen, c.qr, qrX, qrY, qrS);
+    if(c.assetId){
+      const fs=fitFont(pen, c.assetId, qrS+bandH*0.12, h*0.05, h*0.03);
+      const tw=pen.measure(c.assetId, fs, true);
+      pen.textRot(c.assetId, x+w-ins-vstrip*0.42 + fs*0.34, bandCy+tw/2, fs, c.col, true);
     }
   }
-  const contentCx = (c.showQR && qrX!=null) ? (x+w*0.32 + qrX)/2 : x+w*0.62;
-  const leftLim = x + w*0.33;
-  const rightLim = (c.showQR && qrX!=null) ? qrX - w*0.015 : x + w - ins - w*0.03;
-  const maxW = 2*Math.min(contentCx-leftLim, rightLim-contentCx);
-  // site code line (optional, above number)
-  if(c.showSite && c.site){
-    doc.setTextColor(...c.col); doc.setFont('helvetica','bold');
-    doc.setFontSize(fitFont(doc,c.site,maxW,h*0.062,h*0.035));
-    doc.text(c.site,contentCx,y+h*0.27,{align:'center'});
-  }
-  // number (fit to available width)
-  doc.setTextColor(...c.num); doc.setFont('helvetica','bold');
-  doc.setFontSize(fitFont(doc,c.text,maxW*0.98,c.showQR?h*0.155:h*0.19,h*0.07));
-  doc.text(c.text,contentCx,y+h*0.44,{align:'center'});
-  // logo (clamp width to available space)
-  const lw=Math.min(c.showQR?w*0.26:w*0.285, maxW*0.95), lh=h*0.20;
-  if(c.logo) placeAlias(doc,c.logo.dataURL,c.logoFmt,c.logo.aspect,contentCx-lw/2,y+h*0.50,lw,lh,c.logoAlias);
-  else { doc.setTextColor(...GREY); doc.setFont('helvetica','italic'); doc.setFontSize(h*0.055); doc.text('[ logo ]',contentCx,y+h*0.61,{align:'center'}); }
-  // phone (black; sits below symbol/QR so it can run wide)
-  doc.setTextColor(...BLACK); doc.setFont('helvetica','bold');
-  doc.setFontSize(fitFont(doc,c.phone,(w-2*ins)*0.7,h*0.08,h*0.05));
-  doc.text(c.phone,contentCx,y+h*0.79,{align:'center'});
-  // footer
-  doc.setTextColor(...c.col); doc.setFont('helvetica','bold'); doc.setFontSize(h*0.054);
-  doc.text('DO NOT REMOVE THIS TAG',cx,y+h*0.92,{align:'center'});
+
+  // centered stack region (between symbol and QR/edge), auto-sized to fit
+  const leftLim = x + w*0.32;
+  const rightLim = c.qr ? (qrX - w*0.02) : (x + w - ins - w*0.02);
+  const colCx = (leftLim + rightLim)/2;
+  const maxW = Math.max(w*0.2, rightLim - leftLim);
+
+  const gap=h*0.026;
+  const siteFs = c.siteCode ? fitFont(pen, c.siteCode, maxW, h*0.078, h*0.04) : 0;
+  const numFs  = fitFont(pen, c.text, maxW*0.98, c.qr?h*0.165:h*0.185, h*0.07);
+  const logoH  = c.logo ? h*0.17 : h*0.05;
+  const phoneFs= fitFont(pen, c.phone, maxW, h*0.082, h*0.05);
+  const total = numFs + gap + logoH + gap + phoneFs + (c.siteCode ? siteFs+gap : 0);
+  let cyc = bandCy - total/2;
+  if(c.siteCode){ pen.text(c.siteCode, colCx, cyc+siteFs*0.8, siteFs, c.col,'center',true); cyc+=siteFs+gap; }
+  pen.text(c.text, colCx, cyc+numFs*0.78, numFs, c.num,'center',true); cyc+=numFs+gap;
+  if(c.logo){ const lbW=Math.min(w*0.30, maxW*0.95); pen.fitImage(c.logo,c.logoFmt, colCx-lbW/2, cyc, lbW, logoH, c.logoAlias); }
+  else pen.text('[ logo ]', colCx, cyc+logoH*0.8, h*0.05, GREY,'center',false);
+  cyc+=logoH+gap;
+  pen.text(c.phone, colCx, cyc+phoneFs*0.78, phoneFs, BLACK,'center',true);
+
+  pen.text('DO NOT REMOVE THIS TAG',cx,y+h*0.915,h*0.052,c.col,'center',true);
 }
-function drawCompact(doc,x,y,w,h,c){
+function drawCompact(pen,x,y,w,h,c){
   const ins=h*0.06, r=(c.radius!=null?c.radius:h*0.12);
-  if(!isWhite(c.bg)){ doc.setFillColor(...c.bg); doc.roundedRect(x+h*0.02,y+h*0.02,w-h*0.04,h-h*0.04,h*0.14,h*0.14,'F'); }
-  doc.setDrawColor(...c.col); doc.setLineWidth(Math.max(0.8,h*0.03));
-  doc.roundedRect(x+ins,y+ins,w-2*ins,h-2*ins,r,r,'S');
+  if(!isWhite(c.bg)) pen.fillRoundRect(x+h*0.02,y+h*0.02,w-h*0.04,h-h*0.04,h*0.14,c.bg);
+  pen.strokeRoundRect(x+ins,y+ins,w-2*ins,h-2*ins,r,c.col,Math.max(0.8,h*0.03));
   let nx=x+w*0.5;
-  if(c.sym){ placeAlias(doc,c.sym.dataURL,'PNG',c.sym.aspect,x+w*0.06,y+h*0.18,h*0.66,h*0.64,c.symAlias); nx=x+w*0.60; }
-  doc.setTextColor(...c.num); doc.setFont('helvetica','bold'); doc.setFontSize(h*0.40);
-  doc.text(c.text,nx,y+h*0.50,{align:'center'});
-  doc.setTextColor(...c.col); doc.setFont('helvetica','bold'); doc.setFontSize(h*0.13);
-  doc.text('DO NOT REMOVE',nx,y+h*0.84,{align:'center'});
+  if(c.sym){ pen.fitImage(c.sym,'PNG',x+w*0.06,y+h*0.18,h*0.66,h*0.64,c.symAlias); nx=x+w*0.60; }
+  if(c.siteCode){ pen.text(c.siteCode, nx, y+h*0.30, h*0.155, c.col, 'center', true, w*0.7); pen.text(c.text, nx, y+h*0.605, h*0.32, c.num, 'center', true); }
+  else pen.text(c.text, nx, y+h*0.52, h*0.40, c.num, 'center', true);
+  pen.text('DO NOT REMOVE',nx,y+h*0.86,h*0.12,c.col,'center',true);
+}
+
+/* ---------- QR code + asset ID ---------- */
+function assetIdFor(n){
+  // {site}-{prefix}{number}-{YY}   e.g.  YVR6-E-0007-26
+  return [ ($('site').value||'').trim(), fmt(n), yy() ].filter(Boolean).join('-');
+}
+function makeQR(text){
+  try{
+    const q=qrcode(0,'M'); q.addData(text); q.make(); const n=q.getModuleCount();
+    const m=new Array(n);
+    for(let r=0;r<n;r++){ const row=new Array(n); for(let col=0;col<n;col++) row[col]=q.isDark(r,col); m[r]=row; }
+    return m;
+  }catch(e){ console.warn('QR generation failed:', e); return null; }
+}
+function drawQR(pen, m, x, y, size){
+  const n=m.length, mod=size/n, o=mod*0.06;
+  pen.fillRect(x-mod, y-mod, size+2*mod, size+2*mod, [255,255,255]); // white quiet zone (matters on colored bg)
+  for(let r=0;r<n;r++) for(let col=0;col<n;col++) if(m[r][col]) pen.fillRect(x+col*mod, y+r*mod, mod+o, mod+o, [0,0,0]);
+}
+function updateAssetUI(){
+  $('qrYearRow').style.display = $('showQR').checked ? '' : 'none';
+  const first = currentPreviewNum();
+  const L=currentLayout();
+  // asset ID breakdown legend (always shown)
+  const site=($('site').value||'').trim(), en=($('prefix').value||'').replace(/-+$/,'');
+  $('aidVal').textContent = assetIdFor(first);
+  $('aidLeg').innerHTML = `<b>${site||'\u2014'}</b> site &middot; <b>${en||'\u2014'}</b> energy &middot; <b>${padBody(first)}</b> asset&nbsp;no. &middot; <b>${yy()||'\u2014'}</b> year`;
+  // controls-side hint / warning
+  let warn='';
+  if($('showQR').checked && L.content==='compact') warn='QR &amp; site code apply to full-tag formats, not the small ID label.';
+  else if($('showQR').checked && typeof qrcode==='undefined') warn='QR library did not load; QR will be skipped.';
+  if(warn) $('assetPreview').innerHTML = warn;
+  else $('assetPreview').textContent = $('showQR').checked ? ('Encodes e.g. '+assetIdFor(first)) : '';
+}
+
+/* ---------- ctx builder shared by preview & PDF ---------- */
+function buildCtx(L){
+  const et=ENERGY_TYPES[curEnergy], co=COMPANIES[curCompany], th=theme(et);
+  const site=($('site').value||'').trim();
+  return { header:`${et.label} Energy Isolation Point`, phone:$('phone').value||'',
+    col:th.color, bg:(th.bg||[255,255,255]), num:(th.num||th.color),
+    sym:symCache[curEnergy]||null, symAlias:'sym-'+curEnergy,
+    logo:logoCache[curCompany]||null, logoFmt:co.fmt, logoAlias:'logo-'+curCompany,
+    radius:(L.custom?L.radiusPt:null),
+    siteCode:($('showSite').checked && site && L.content!=='compact')?site:null,
+    showQR:($('showQR').checked && L.content!=='compact'), qr:null, assetId:null };
+}
+
+/* ---------- sheet diagram (true Letter/A4 proportions, scaled label slots) ---------- */
+function drawSheetDiagram(count){
+  const cv=$('sheetCanvas'); if(!cv) return;
+  const L=currentLayout(), g=layoutGeom(L);
+  const col=theme(ENERGY_TYPES[curEnergy]).color;
+  const boxW=192, S=boxW/g.page.w, dpr=window.devicePixelRatio||1;
+  cv.width=Math.round(g.page.w*S*dpr); cv.height=Math.round(g.page.h*S*dpr);
+  cv.style.width=(g.page.w*S)+'px'; cv.style.height=(g.page.h*S)+'px';
+  const ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,g.page.w*S,g.page.h*S);
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,g.page.w*S,g.page.h*S);
+  const per=g.perPage, onCount=Math.min(count,per);
+  const pvOnSheet=(pvIndex<per)?pvIndex:-1;
+  const rr=Math.max(1,(L.custom?L.radiusPt:(L.labelH*PT)*0.0625)*S);
+  for(let i=0;i<per;i++){
+    const c_=i%g.cols, r_=Math.floor(i/g.cols);
+    const x=(g.mL+c_*(g.lw+g.gX))*S, y=(g.mT+r_*(g.lh+g.gY))*S, w=g.lw*S, h=g.lh*S;
+    roundRectPath(ctx,x,y,w,h,rr);
+    if(i<onCount){ ctx.fillStyle=`rgba(${col[0]},${col[1]},${col[2]},0.16)`; ctx.fill(); ctx.lineWidth=Math.max(0.8,h*0.05); ctx.strokeStyle=rgb(col); ctx.stroke(); }
+    else { ctx.fillStyle='rgba(120,130,140,0.10)'; ctx.fill(); ctx.lineWidth=0.8; ctx.strokeStyle='rgba(120,130,140,0.35)'; ctx.stroke(); }
+    if(i===pvOnSheet){ ctx.fillStyle=`rgba(${col[0]},${col[1]},${col[2]},0.34)`; ctx.fill(); ctx.lineWidth=Math.max(1.4,h*0.09); ctx.strokeStyle=rgb(col); ctx.stroke(); }
+  }
+  ctx.lineWidth=1; ctx.strokeStyle='rgba(15,20,27,0.18)'; ctx.strokeRect(0.5,0.5,g.page.w*S-1,g.page.h*S-1);
+}
+function buildSheet(){ drawSheetDiagram(getNumbers().nums.length); }
+function paintSheet(count){
+  drawSheetDiagram(count);
+  const per=Math.max(1,currentLayout().cols*currentLayout().rows);
+  const sheets=Math.max(1,Math.ceil(count/per));
+  $('sheetLabel').textContent = sheets>1 ? `Sheet 1 of ${sheets}` : 'Sheet 1';
+  $('sheetMore').textContent = sheets>1 ? `+ ${(sheets-1).toLocaleString()} more sheet${sheets-1!==1?'s':''}` : '';
+}
+function updatePvNav(){
+  const n=previewNums().length;
+  if(n<=1){ $('pvNav').style.display='none'; $('previewOf').textContent = n===1?'1 tag':''; return; }
+  $('pvNav').style.display=''; clampPvIndex();
+  $('pvPos').textContent=`Label ${pvIndex+1} of ${n.toLocaleString()} \u00b7 ${fmt(previewNums()[pvIndex])}`;
+  $('previewOf').textContent=`label ${pvIndex+1} of ${n.toLocaleString()}`;
+  $('pvPrev').disabled = pvIndex<=0;
+  $('pvNext').disabled = pvIndex>=n-1;
+}
+function stepPreview(d){
+  const n=previewNums().length; if(!n) return;
+  pvIndex=Math.max(0,Math.min(n-1,pvIndex+d));
+  drawPreview(); updateAssetUI(); updatePvNav(); paintSheet(n);
+}
+
+/* ---------- canvas preview (same routine as PDF) ---------- */
+function drawPreview(){
+  const L=currentLayout();
+  const pn=currentPreviewNum();
+  const c=buildCtx(L); c.text=fmt(pn);
+  if(c.showQR && L.content!=='compact'){ c.assetId=assetIdFor(pn); c.qr=makeQR(c.assetId); }
+  const LW=L.labelW*PT, LH=L.labelH*PT;
+  const S=Math.min(330/LW, 210/LH);
+  const cv=$('pvCanvas'); const dpr=window.devicePixelRatio||1;
+  cv.width=Math.round(LW*S*dpr); cv.height=Math.round(LH*S*dpr);
+  cv.style.width=(LW*S)+'px'; cv.style.height=(LH*S)+'px';
+  const ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,LW*S,LH*S);
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,LW*S,LH*S);
+  const drawer = (L.content==='compact') ? drawCompact : drawIso;
+  drawer(canvasPen(ctx,S), 0, 0, LW, LH, c);
+}
+
+/* ---------- refresh ---------- */
+function refresh(){
+  const {nums,err}=getNumbers();
+  const ro=$('readout'), go=$('go');
+  clampPvIndex();
+  drawPreview(); updateHints(); updateAssetUI();
+  if(err){
+    ro.innerHTML=`<span class="warn">${err}</span>`; go.disabled=true;
+    $('statCount').textContent='0'; $('statSheets').textContent='0'; $('statLast').textContent='\u2014';
+    $('previewOf').textContent=''; $('pvNav').style.display='none'; paintSheet(0); saveSettings(); return;
+  }
+  go.disabled=false;
+  const L=currentLayout(), per=Math.max(1,L.cols*L.rows), sheets=Math.ceil(nums.length/per);
+  const name = LAYOUTS[curFormat].custom ? `custom ${L.labelW}"×${L.labelH}" (${per}/sheet)` : LAYOUTS[curFormat].avery;
+  $('statCount').textContent=nums.length.toLocaleString();
+  $('statSheets').textContent=sheets.toLocaleString();
+  $('statLast').textContent=fmt(nums[nums.length-1]);
+  $('previewOf').textContent=nums.length>1?`label ${pvIndex+1} of ${nums.length.toLocaleString()}`:'1 tag';
+  ro.innerHTML=`<span class="good">Ready</span>&nbsp;&middot;&nbsp;${nums.length.toLocaleString()} label${nums.length!==1?'s':''} &middot; ${sheets.toLocaleString()} sheet${sheets!==1?'s':''} &middot; ${name}`;
+  updatePvNav(); paintSheet(nums.length); saveSettings();
 }
 
 /* ---------- build the PDF ---------- */
-const sleepFrame = () => new Promise(r => requestAnimationFrame(r));
-function setProgress(done,total,label){
-  const pct = total ? Math.round(done/total*100) : 0;
-  $('progress').style.display='block';
-  $('progressBar').style.width = pct+'%';
-  $('readout').textContent = `${label||'Generating'}: ${done}/${total} · ${pct}%`;
-}
+const sleepFrame=()=>new Promise(r=>requestAnimationFrame(r));
+function setProgress(done,total,label){ const pct=total?Math.round(done/total*100):0; $('progress').style.display='block'; $('progressBar').style.width=pct+'%'; $('readout').innerHTML=`${label||'Generating'}: ${done}/${total} &middot; ${pct}%`; }
 async function generate(){
   const {nums,err}=getNumbers();
   if(err || !nums.length) return;
-  const L=currentLayout(), g=layoutGeom(L), isIso = L.content!=='compact';
+  const L=currentLayout(), g=layoutGeom(L);
   if(nums.length>1500 && !confirm(`${nums.length} labels will generate a large PDF in your browser and may take a while. Continue?`)) return;
-
-  const sym=await ensureSymbol(curEnergy), logo=await ensureLogo(curCompany);
-  const et=ENERGY_TYPES[curEnergy], co=COMPANIES[curCompany], th=theme(et);
-  const site=($('siteCode').value||'').trim();
-  const showSite = $('optSite').checked && !!site && isIso;
-  let showQR = $('optQR').checked && isIso && qrLoaded();
-
-  const go=$('go'); go.disabled=true; go.textContent='Generating…';
+  await ensureSymbol(curEnergy); await ensureLogo(curCompany);
+  const et=ENERGY_TYPES[curEnergy], co=COMPANIES[curCompany];
+  const go=$('go'); go.disabled=true; go.textContent='Generating\u2026';
   $('progress').style.display='block'; $('progressBar').style.width='0%';
   try{
     const { jsPDF }=window.jspdf;
@@ -553,25 +722,23 @@ async function generate(){
       subject:`${nums.length} labels, ${Math.ceil(nums.length/g.perPage)} sheet(s)`,
       author:co.label,
       creator:`Isolation Label Generator v${VERSION} (${BUILD_DATE})`,
-      keywords:`iso-label-gen v${VERSION}; ${et.label}; ${co.label}; format ${L.avery||'custom'}; ${showQR?'QR on; ':''}${showSite?'site '+site+'; ':''}generated ${new Date().toISOString().slice(0,10)}; tags ${fmt(nums[0])}-${fmt(nums[nums.length-1])}; ${nums.length} labels`
+      keywords:`iso-label-gen v${VERSION}; ${et.label}; ${co.label}; format ${L.avery||'custom'}; generated ${new Date().toISOString().slice(0,10)}; tags ${fmt(nums[0])}-${fmt(nums[nums.length-1])}; ${nums.length} labels`
     });
-    const ctx={ header:`${et.label} Energy Isolation Point`, phone:$('phone').value||'',
-                col:th.color, bg:(th.bg||[255,255,255]), num:(th.num||th.color),
-                sym, symAlias:'sym-'+curEnergy, logo, logoFmt:co.fmt, logoAlias:'logo-'+curCompany,
-                radius:(L.custom?L.radiusPt:null), showSite, site, showQR };
-    const drawer = isIso ? drawIso : drawCompact;
-    const CHUNK=40;
+    const ctx=buildCtx(L);
+    const pen=pdfPen(doc);
+    const drawer = (L.content==='compact') ? drawCompact : drawIso;
+    const CHUNK=50;
     for(let i=0;i<nums.length;i++){
       if(i>0 && i%g.perPage===0) doc.addPage();
       const {x,y}=slotXY(g,i);
       ctx.text=fmt(nums[i]);
-      if(showQR){ const aid=assetID(nums[i]); ctx.assetText=aid; ctx.qr=makeQR(aid); } else { ctx.assetText=null; ctx.qr=null; }
-      drawer(doc,x,y,g.lw,g.lh,ctx);
+      if(ctx.showQR && L.content!=='compact'){ ctx.assetId=assetIdFor(nums[i]); ctx.qr=makeQR(ctx.assetId); } else { ctx.qr=null; ctx.assetId=null; }
+      drawer(pen,x,y,g.lw,g.lh,ctx);
       if(i%CHUNK===0){ setProgress(i,nums.length,'Generating PDF'); await sleepFrame(); }
     }
     setProgress(nums.length,nums.length,'Finalizing download'); await sleepFrame();
     doc.save(`${et.prefix||et.label}_${L.avery||'custom'}_${fmt(nums[0])}_to_${fmt(nums[nums.length-1])}.pdf`);
-    $('readout').textContent = `Done: ${nums.length} labels · ${Math.ceil(nums.length/g.perPage)} sheets`;
+    $('readout').innerHTML = `<span class="good">Done</span>&nbsp;&middot;&nbsp;${nums.length} labels &middot; ${Math.ceil(nums.length/g.perPage)} sheets`;
   }catch(e){
     console.error(e);
     $('readout').innerHTML = `<span class="warn">PDF generation failed: ${e.message||e}</span>`;
@@ -581,33 +748,84 @@ async function generate(){
   }
 }
 
+/* ---------- settings (namespaced; only our own key) ---------- */
+const CUSTOM_FIELDS=['cPage','cContent','cW','cH','cCols','cRows','cMT','cML','cGX','cGY','cR'];
+function saveSettings(){
+  try{
+    const cust={}; CUSTOM_FIELDS.forEach(id=> cust[id]=$(id).value);
+    localStorage.setItem(LS, JSON.stringify({ format:curFormat, energy:curEnergy, company:curCompany, mode,
+      start:$('start').value, end:$('end').value, list:$('list').value, prefix:$('prefix').value, pad:$('pad').value, phone:$('phone').value,
+      site:$('site').value, qrYear:$('qrYear').value, showSite:$('showSite').checked, showQR:$('showQR').checked, cust }));
+  }catch(e){}
+}
+function restoreInputs(s){
+  if(!s) return;
+  if(s.start!=null) $('start').value=s.start;
+  if(s.end!=null) $('end').value=s.end;
+  if(s.list!=null) $('list').value=s.list;
+  if(s.prefix!=null) $('prefix').value=s.prefix;
+  if(s.pad!=null) $('pad').value=s.pad;
+  if(s.phone) $('phone').value=s.phone;
+  if(s.site!=null) $('site').value=s.site;
+  if(s.qrYear!=null) $('qrYear').value=s.qrYear;
+  if(s.showSite!=null) $('showSite').checked=!!s.showSite;
+  if(s.showQR!=null) $('showQR').checked=!!s.showQR;
+  if(s.cust) CUSTOM_FIELDS.forEach(id=>{ if(s.cust[id]!=null) $(id).value=s.cust[id]; });
+}
+
 /* ---------- wiring ---------- */
 function fillSelect(id,obj){ const s=$(id); s.innerHTML=''; for(const k in obj){ const o=document.createElement('option'); o.value=k; o.textContent=(obj[k].name||obj[k].label); s.appendChild(o); } }
 function setMode(m){
-  mode=m;
+  mode=m; pvIndex=0;
   $('tabRange').setAttribute('aria-selected', m==='range');
   $('tabList').setAttribute('aria-selected', m==='list');
   $('rangeFields').style.display = m==='range' ? '' : 'none';
   $('listFields').style.display  = m==='list'  ? '' : 'none';
   refresh();
 }
-$('format').onchange  = e => { curFormat=e.target.value; applyFormat(); };
-$('energy').onchange  = e => { curEnergy=e.target.value; applyEnergy(); };
+$('format').onchange  = e => { curFormat=e.target.value; pvIndex=0; applyFormat(); };
+$('energy').onchange  = e => { curEnergy=e.target.value; pvIndex=0; applyEnergy(); };
 $('company').onchange = e => { curCompany=e.target.value; applyCompany(); };
+$('pvPrev').onclick = ()=>stepPreview(-1);
+$('pvNext').onclick = ()=>stepPreview(1);
 $('tabRange').onclick = ()=>setMode('range');
 $('tabList').onclick  = ()=>setMode('list');
-['start','end','list','prefix','pad','phone','siteCode','qrYear'].forEach(id=> $(id).addEventListener('input', refresh));
-['optSite','optQR'].forEach(id=> $(id).addEventListener('change', refresh));
+['start','end','list','prefix','pad','phone','site','qrYear'].forEach(id=> $(id).addEventListener('input', refresh));
+['showSite','showQR'].forEach(id=> $(id).addEventListener('change', refresh));
 ['cPage','cContent','cW','cH','cCols','cRows','cML','cMT','cGX','cGY','cR'].forEach(id=> $(id).addEventListener('input', applyFormat));
+['start','end','prefix','pad','phone'].forEach(id=> $(id).addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); generate(); } }));
 $('go').onclick = generate;
 
 $('verBadge').textContent = 'v'+VERSION;
+$('buildDate').textContent = BUILD_DATE;
+
+/* ---------- UI light/dark theme (separate from label themes; own LS key) ---------- */
+const UITHEME='ilg.uitheme';
+function applyUITheme(t){ document.documentElement.setAttribute('data-theme', t==='dark'?'dark':'light'); try{ localStorage.setItem(UITHEME,t); }catch(e){} }
+(function(){ let t='dark'; try{ t=localStorage.getItem(UITHEME)||'dark'; }catch(e){} applyUITheme(t); })();
+$('themeToggle').onclick=()=>applyUITheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');
+
 fillSelect('format', LAYOUTS);
 fillSelect('energy', ENERGY_TYPES);
 fillSelect('company', COMPANIES);
-$('format').value=curFormat; $('energy').value=curEnergy; $('company').value=curCompany;
+
+/* load saved selections, then run the cascade, then restore field overrides */
+let SAVED=null;
+try{ SAVED=JSON.parse(localStorage.getItem(LS)||'null'); }catch(e){}
+if(SAVED){
+  if(LAYOUTS[SAVED.format]) curFormat=SAVED.format;
+  if(ENERGY_TYPES[SAVED.energy]) curEnergy=SAVED.energy;
+  if(SAVED.mode==='list') mode='list';
+}
+$('format').value=curFormat; $('energy').value=curEnergy;
+restoreInputs(SAVED);                 // custom fields needed before applyFormat geometry
 applyFormat();
-applyEnergy();
+(async ()=>{
+  await applyEnergy();                // sets prefix/pad/phone + company default for the energy
+  if(SAVED && COMPANIES[SAVED.company] && SAVED.company!==curCompany){ curCompany=SAVED.company; $('company').value=curCompany; await applyCompany(); }
+  restoreInputs(SAVED);              // re-apply user overrides (prefix/pad/phone/range) after cascade
+  setMode(mode);
+})();
 </script>
 </body>
 </html>
