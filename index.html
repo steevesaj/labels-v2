@@ -42,6 +42,8 @@
   button.go:hover{filter:brightness(.96)}
   button.go:disabled{opacity:.5; cursor:not-allowed}
   .readout{font-family:var(--mono); font-size:13px; color:var(--ink); background:var(--field); border:1px solid var(--line); border-radius:8px; padding:10px 12px; margin-top:14px}
+  .progress{height:8px; background:#e5e7eb; border-radius:999px; overflow:hidden; margin-top:10px; display:none}
+  .progress > div{height:100%; width:0%; background:#1a1d21; transition:width .1s linear}
   .readout .warn{color:var(--red); font-weight:600}
   .pv-label{font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin-bottom:10px}
   /* Live label preview — mirrors the printed tag */
@@ -108,6 +110,7 @@
 
       <button class="go" id="go">Generate PDF</button>
       <div class="readout" id="readout"></div>
+      <div class="progress" id="progress"><div id="progressBar"></div></div>
     </div>
 
     <!-- Live preview -->
@@ -141,7 +144,7 @@
    The constants below are Avery 5163 (2"x4", 10-up). If tags print slightly
    off, adjust MARGIN_* / GUTTER / LABEL_* (points; 72 pt = 1 inch) and re-test.
    ========================================================================= */
-const VERSION = "1.1.0";        // bump on every change (see README changelog)
+const VERSION = "1.2.0-fast";        // bump on every change (see README changelog)
 const BUILD_DATE = "2026-06-17";
 
 // --- ASSET PATHS (relative to index.html in the repo) ---
@@ -261,28 +264,78 @@ function drawLabel(doc, x, y, text, phone){
 }
 
 /* ---------- build the PDF ---------- */
+const sleepFrame = () => new Promise(resolve => requestAnimationFrame(resolve));
+
+function setProgress(done, total, label){
+  const pct = total ? Math.round((done/total)*100) : 0;
+  $('progress').style.display = 'block';
+  $('progressBar').style.width = pct + '%';
+  $('readout').innerHTML = `${label || 'Generating'}: ${done}/${total} labels · ${pct}%`;
+}
+
+/*
+  Performance notes:
+  - This is still client-side generation, so huge jobs are limited by the browser.
+  - The main improvement is chunking the loop so the UI does not look frozen.
+  - The biggest cost remains repeated image placement inside jsPDF.
+*/
 async function generate(){
   await assetsP;                       // ensure logo + symbol are loaded
   const {nums,err} = getNumbers();
   if(err || !nums.length) return;
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({unit:'pt', format:'letter'});
-  doc.setProperties({
-    title: `Isolation labels ${fmt(nums[0])}\u2013${fmt(nums[nums.length-1])}`,
-    subject: `${nums.length} labels, ${Math.ceil(nums.length/PER_PAGE)} sheet(s)`,
-    author: 'Isolation Label Generator',
-    creator: `Isolation Label Generator v${VERSION} (${BUILD_DATE})`,
-    keywords: `iso-label-gen v${VERSION}; generated ${new Date().toISOString().slice(0,10)}; tags ${fmt(nums[0])}-${fmt(nums[nums.length-1])}; ${nums.length} labels`
-  });
-  const phone = $('phone').value || '';
-  nums.forEach((n,i)=>{
-    if(i>0 && i%PER_PAGE===0) doc.addPage();
-    const slot=i%PER_PAGE, col=slot%COLS, row=Math.floor(slot/COLS);
-    const x = MARGIN_LEFT + col*(LABEL_W+COL_GUTTER);
-    const y = MARGIN_TOP  + row*(LABEL_H+ROW_GUTTER);
-    drawLabel(doc, x, y, fmt(n), phone);
-  });
-  doc.save(`isolation-labels_${fmt(nums[0])}_to_${fmt(nums[nums.length-1])}.pdf`);
+
+  if(nums.length > 1500){
+    const ok = confirm(`${nums.length} labels will generate a large PDF in your browser. It may take a while. Continue?`);
+    if(!ok) return;
+  }
+
+  const go = $('go');
+  go.disabled = true;
+  go.textContent = 'Generating...';
+  $('progress').style.display = 'block';
+  $('progressBar').style.width = '0%';
+
+  try{
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({unit:'pt', format:'letter', compress:true});
+    doc.setProperties({
+      title: `Isolation labels ${fmt(nums[0])}\u2013${fmt(nums[nums.length-1])}`,
+      subject: `${nums.length} labels, ${Math.ceil(nums.length/PER_PAGE)} sheet(s)`,
+      author: 'Isolation Label Generator',
+      creator: `Isolation Label Generator v${VERSION} (${BUILD_DATE})`,
+      keywords: `iso-label-gen v${VERSION}; generated ${new Date().toISOString().slice(0,10)}; tags ${fmt(nums[0])}-${fmt(nums[nums.length-1])}; ${nums.length} labels`
+    });
+
+    const phone = $('phone').value || '';
+    const CHUNK = 50; // increase to 100 for slightly faster, decrease to 20 for smoother UI
+
+    for(let i=0; i<nums.length; i++){
+      if(i>0 && i%PER_PAGE===0) doc.addPage();
+      const slot=i%PER_PAGE, col=slot%COLS, row=Math.floor(slot/COLS);
+      const x = MARGIN_LEFT + col*(LABEL_W+COL_GUTTER);
+      const y = MARGIN_TOP  + row*(LABEL_H+ROW_GUTTER);
+      drawLabel(doc, x, y, fmt(nums[i]), phone);
+
+      if(i % CHUNK === 0){
+        setProgress(i, nums.length, 'Generating PDF');
+        await sleepFrame();
+      }
+    }
+
+    setProgress(nums.length, nums.length, 'Finalizing download');
+    await sleepFrame();
+
+    doc.save(`isolation-labels_${fmt(nums[0])}_to_${fmt(nums[nums.length-1])}.pdf`);
+
+    $('readout').innerHTML = `Done: ${nums.length} labels · ${Math.ceil(nums.length/PER_PAGE)} sheets`;
+  }catch(e){
+    console.error(e);
+    $('readout').innerHTML = `<span class="warn">PDF generation failed: ${e.message || e}</span>`;
+  }finally{
+    go.disabled = false;
+    go.textContent = 'Generate PDF';
+    setTimeout(()=>{ $('progress').style.display = 'none'; }, 1200);
+  }
 }
 
 /* ---------- wiring ---------- */
