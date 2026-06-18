@@ -6,6 +6,7 @@
 <title>Isolation Label Generator</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -103,8 +104,28 @@
   .go:hover{background:var(--accent-press)}
   .go:active{transform:translateY(1px)}
   .go:disabled{opacity:.45; cursor:not-allowed; box-shadow:none}
+  .actions{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px}
+  .btn2{display:flex; align-items:center; justify-content:center; gap:8px; padding:12px 10px; font:inherit; font-weight:600; font-size:13px; color:#3a6fb0; background:#e9f0fb; border:1px solid transparent; border-radius:10px; cursor:pointer; transition:.13s; text-align:center}
+  .btn2:hover{background:#dae6f8; color:#2f5e9c}
+  .btn2:active{transform:translateY(1px)}
+  .btn2 svg{width:15px; height:15px; flex:none}
+  :root[data-theme="dark"] .btn2{color:#9ec0f2; background:#1d2942}
+  :root[data-theme="dark"] .btn2:hover{background:#26334e; color:#cfe0fb}
+  .btn2:disabled{opacity:.45; cursor:not-allowed}
+  .btn2:disabled:hover{background:#e9f0fb; color:#3a6fb0}
+  :root[data-theme="dark"] .btn2:disabled:hover{background:#1d2942; color:#9ec0f2}
+  .menu-wrap{position:relative}
+  .menu-wrap .btn2{width:100%}
+  .caret{margin-left:1px; opacity:.7}
+  .popmenu{position:absolute; bottom:calc(100% + 6px); left:0; right:0; background:var(--surface); border:1px solid var(--line); border-radius:10px; box-shadow:var(--shadow); padding:5px; z-index:30; display:flex; flex-direction:column; gap:3px}
+  .popmenu[hidden]{display:none}
+  .popitem{display:flex; align-items:center; gap:9px; width:100%; padding:9px 10px; font:inherit; font-size:13px; font-weight:600; color:var(--ink); background:none; border:0; border-radius:7px; cursor:pointer; text-align:left}
+  .popitem:hover{background:var(--surface-2); color:var(--accent)}
+  .popitem svg{width:15px; height:15px; flex:none; color:var(--muted)}
+  .popitem:hover svg{color:var(--accent)}
+  .popitem span{margin-left:auto; font-family:var(--mono); font-size:11px; color:var(--muted); font-weight:500}
 
-  .readout{font-family:var(--mono); font-size:12.5px; color:var(--ink-2); background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:11px 13px; margin-top:14px; min-height:42px; display:flex; align-items:center}
+  .readout{font-family:var(--mono); font-size:12.5px; color:var(--ink-2); background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:11px 13px; margin-top:14px; min-height:42px; display:flex; align-items:center; justify-content:center; text-align:center}
   .readout .warn{color:var(--red); font-weight:600}
   .readout .good{color:var(--ok); font-weight:600}
   .progress{height:7px; background:var(--line); border-radius:999px; overflow:hidden; margin-top:10px; display:none}
@@ -270,11 +291,51 @@
               <div><div class="lab">QR asset tag</div><div class="sub">Scannable ID &middot; centers the layout</div></div>
               <span class="switch"><input type="checkbox" id="showQR"><span class="track"></span></span>
             </label>
+            <label class="tog">
+              <div><div class="lab">Asset ID text</div><div class="sub">Printed code under the QR / number</div></div>
+              <span class="switch"><input type="checkbox" id="showAsset" checked><span class="track"></span></span>
+            </label>
           </div>
 
-          <button class="go" id="go">Generate PDF</button>
           <div class="readout" id="readout"></div>
           <div class="progress" id="progress"><div id="progressBar"></div></div>
+          <button class="go" id="go">Generate PDF</button>
+          <div class="actions">
+            <div class="menu-wrap">
+              <button class="btn2" id="btnManifest" title="Export the label manifest" aria-haspopup="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"></path></svg>
+                Manifest
+                <svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+              </button>
+              <div class="popmenu" id="manifestMenu" hidden>
+                <button class="popitem" data-fmt="xlsx">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M8 8l8 8M16 8l-8 8"></path></svg>
+                  Excel <span>.xlsx</span>
+                </button>
+                <button class="popitem" data-fmt="csv">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path></svg>
+                  CSV <span>.csv</span>
+                </button>
+              </div>
+            </div>
+            <div class="menu-wrap">
+              <button class="btn2" id="btnQA" title="Generate a QA proof sheet" aria-haspopup="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                QA Proof Sheet
+                <svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+              </button>
+              <div class="popmenu" id="qaMenu" hidden>
+                <button class="popitem" data-fill="fillable">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg>
+                  Fillable PDF <span>form</span>
+                </button>
+                <button class="popitem" data-fill="static">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"></path><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                  Non-fillable PDF <span>print</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -315,6 +376,7 @@
             <div class="stat"><div class="k">Last tag</div><div class="v" id="statLast" style="font-size:17px">&mdash;</div></div>
           </div>
         </div>
+        </div>
       </div>
     </div>
   </div>
@@ -337,7 +399,7 @@
      LAYOUTS       -> page size, grid, label size, margins, gaps (Avery presets + Custom)
    ASSETS load by relative path; serve /assets beside this file (GitHub Pages).
    ========================================================================= */
-const VERSION = "2.4.0";
+const VERSION = "3.2.0";
 const BUILD_DATE = "2026-06-18";
 const PT = 72;
 const LS = 'ilg.settings';
@@ -541,6 +603,12 @@ function drawIso(pen,x,y,w,h,c){
       const fs=fitFont(pen, c.assetId, qrS+w*0.06, h*0.040, h*0.024);
       pen.text(c.assetId, qrX+qrS/2, qrY+qrS+h*0.046, fs, BLACK,'center',false);
     }
+  } else if(c.assetId){
+    // no QR: asset id runs vertically up the right interior edge
+    const fs=fitFont(pen, c.assetId, mainH*0.92, h*0.044, h*0.028);
+    const tw=pen.measure(c.assetId, fs, true);
+    pen.textRot(c.assetId, ix+iw - fs*0.28, rowCy+tw/2, fs, BLACK, true);
+    qrLeft = ix+iw - fs*1.35;
   }
 
   // --- hazard symbol (left), centered on the main row ---
@@ -603,6 +671,13 @@ function drawIsoModern(pen,x,y,w,h,c){
       const fs=fitFont(pen, c.assetId, qrS+w*0.06, h*0.042, h*0.024);
       pen.text(c.assetId, qrX+qrS/2, qrY+qrS+h*0.054, fs, BLACK, 'center', false);
     }
+  } else if(c.assetId){
+    // no QR: asset id runs vertically up the right interior edge of the body
+    const fs=fitFont(pen, c.assetId, bodyH*0.62, h*0.044, h*0.026);
+    const tw=pen.measure(c.assetId, fs, true);
+    const cyA=bodyTop+bodyH*0.40;
+    pen.textRot(c.assetId, interiorR - w*0.015, cyA+tw/2, fs, BLACK, true);
+    qrLeft = interiorR - w*0.015 - fs*1.2;
   }
 
   // content column = everything except the QR; horizontally centered within its width
@@ -647,11 +722,17 @@ function drawCompact(pen,x,y,w,h,c){
   const ins=h*0.06, r=(c.radius!=null?c.radius:h*0.12);
   if(!isWhite(c.bg)) pen.fillRoundRect(x+h*0.02,y+h*0.02,w-h*0.04,h-h*0.04,h*0.14,c.bg);
   pen.strokeRoundRect(x+ins,y+ins,w-2*ins,h-2*ins,r,c.col,Math.max(0.8,h*0.03));
-  let nx=x+w*0.5;
-  if(c.sym){ pen.fitImage(c.sym,'PNG',x+w*0.06,y+h*0.18,h*0.66,h*0.64,c.symAlias); nx=x+w*0.60; }
-  if(c.siteCode){ pen.text(c.siteCode, nx, y+h*0.30, h*0.155, c.col, 'center', true, w*0.7); pen.text(c.text, nx, y+h*0.605, h*0.32, c.num, 'center', true); }
-  else pen.text(c.text, nx, y+h*0.52, h*0.40, c.num, 'center', true);
-  pen.text('DO NOT REMOVE',nx,y+h*0.86,h*0.12,c.col,'center',true);
+  let nx=x+w*0.5, colW=w*0.84;
+  if(c.sym){ pen.fitImage(c.sym,'PNG',x+w*0.06,y+h*0.16,h*0.60,h*0.58,c.symAlias); nx=x+w*0.60; colW=w*0.62; }
+  const hasAsset=!!c.assetId;
+  // tag number
+  pen.text(c.text, nx, y+(hasAsset?0.45:0.52)*h, h*(hasAsset?0.34:0.40), c.num, 'center', true);
+  // full asset id, tucked under the number and above the warning, sharing the same centerline
+  if(hasAsset){
+    const afs=fitFont(pen, c.assetId, colW, h*0.135, h*0.080);
+    pen.text(c.assetId, nx, y+h*0.710, afs, BLACK, 'center', true);
+  }
+  pen.text('DO NOT REMOVE', nx, y+h*0.875, h*0.115, c.col,'center',true);
 }
 
 /* ---------- QR code + asset ID ---------- */
@@ -698,7 +779,7 @@ function buildCtx(L){
     radius:(L.custom?L.radiusPt:null),
     siteCode:($('showSite').checked && site && L.content!=='compact')?site:null,
     style:curStyle,
-    showQR:($('showQR').checked && L.content!=='compact'), qr:null, assetId:null };
+    showQR:($('showQR').checked && L.content!=='compact'), showAsset:$('showAsset').checked, qr:null, assetId:null };
 }
 
 /* ---------- sheet diagram (true Letter/A4 proportions, scaled label slots) ---------- */
@@ -753,7 +834,8 @@ function drawPreview(){
   const L=currentLayout();
   const pn=currentPreviewNum();
   const c=buildCtx(L); c.text=fmt(pn);
-  if(c.showQR && L.content!=='compact'){ c.assetId=assetIdFor(pn); c.qr=makeQR(c.assetId); }
+  if(c.showAsset) c.assetId=assetIdFor(pn);
+  if(c.showQR && L.content!=='compact') c.qr=makeQR(assetIdFor(pn));
   const LW=L.labelW*PT, LH=L.labelH*PT;
   const S=Math.min(330/LW, 210/LH);
   const cv=$('pvCanvas'); const dpr=window.devicePixelRatio||1;
@@ -774,9 +856,9 @@ function refresh(){
   if(err){
     ro.innerHTML=`<span class="warn">${err}</span>`; go.disabled=true;
     $('statCount').textContent='0'; $('statSheets').textContent='0'; $('statLast').textContent='\u2014';
-    $('previewOf').textContent=''; $('pvNav').style.display='none'; paintSheet(0); saveSettings(); return;
+    $('previewOf').textContent=''; $('pvNav').style.display='none'; paintSheet(0); $('btnManifest').disabled=true; $('btnQA').disabled=true; saveSettings(); return;
   }
-  go.disabled=false;
+  go.disabled=false; $('btnManifest').disabled=false; $('btnQA').disabled=false;
   const L=currentLayout(), per=Math.max(1,L.cols*L.rows), sheets=Math.ceil(nums.length/per);
   const name = LAYOUTS[curFormat].custom ? `custom ${L.labelW}"×${L.labelH}" (${per}/sheet)` : LAYOUTS[curFormat].avery;
   $('statCount').textContent=nums.length.toLocaleString();
@@ -817,7 +899,8 @@ async function generate(){
       if(i>0 && i%g.perPage===0) doc.addPage();
       const {x,y}=slotXY(g,i);
       ctx.text=fmt(nums[i]);
-      if(ctx.showQR && L.content!=='compact'){ ctx.assetId=assetIdFor(nums[i]); ctx.qr=makeQR(ctx.assetId); } else { ctx.qr=null; ctx.assetId=null; }
+      ctx.qr=(ctx.showQR && L.content!=='compact')?makeQR(assetIdFor(nums[i])):null;
+      ctx.assetId=ctx.showAsset?assetIdFor(nums[i]):null;
       drawer(pen,x,y,g.lw,g.lh,ctx);
       if(i%CHUNK===0){ setProgress(i,nums.length,'Generating PDF'); await sleepFrame(); }
     }
@@ -840,7 +923,7 @@ function saveSettings(){
     const cust={}; CUSTOM_FIELDS.forEach(id=> cust[id]=$(id).value);
     localStorage.setItem(LS, JSON.stringify({ format:curFormat, energy:curEnergy, company:curCompany, mode,
       start:$('start').value, end:$('end').value, list:$('list').value, prefix:$('prefix').value, pad:$('pad').value, phone:$('phone').value,
-      site:$('site').value, qrYear:$('qrYear').value, tech:$('tech').value, showSite:$('showSite').checked, showQR:$('showQR').checked, style:curStyle, cust }));
+      site:$('site').value, qrYear:$('qrYear').value, tech:$('tech').value, showSite:$('showSite').checked, showQR:$('showQR').checked, showAsset:$('showAsset').checked, style:curStyle, cust }));
   }catch(e){}
 }
 function restoreInputs(s){
@@ -856,7 +939,215 @@ function restoreInputs(s){
   if(s.tech!=null) $('tech').value=s.tech;
   if(s.showSite!=null) $('showSite').checked=!!s.showSite;
   if(s.showQR!=null) $('showQR').checked=!!s.showQR;
+  if(s.showAsset!=null) $('showAsset').checked=!!s.showAsset;
   if(s.cust) CUSTOM_FIELDS.forEach(id=>{ if(s.cust[id]!=null) $(id).value=s.cust[id]; });
+}
+
+/* ---------- manifest export (XLSX via ExcelJS / CSV) ---------- */
+const MANIFEST_COLS = [
+  { header: 'Sequence #',     key: 'seq',     width: 11 },
+  { header: 'Asset ID',       key: 'assetId', width: 26 },
+  { header: 'Energy Type',    key: 'energy',  width: 14 },
+  { header: 'Tag',            key: 'tag',     width: 12 },
+  { header: 'Site Code',      key: 'site',    width: 11 },
+  { header: 'Year',           key: 'year',    width: 8  },
+  { header: 'Company',        key: 'company', width: 24 },
+  { header: 'Format',         key: 'format',  width: 22 },
+  { header: 'Date Generated', key: 'date',    width: 15 },
+  { header: 'Generated By',   key: 'by',      width: 18 },
+  { header: 'Batch ID',       key: 'batch',   width: 22 },
+  { header: 'Print Status',   key: 'status',  width: 13 },
+  { header: 'Tool Version',   key: 'ver',     width: 12 },
+];
+const MONO_KEYS   = new Set(['assetId','tag','site','year','date','batch','ver']);
+const TEXT_KEYS   = new Set(['assetId','tag','site','year']);
+const STATUS_LIST = '"Generated,Printed,Issued,Installed,Retired"';
+
+function manifestRows(){
+  const {nums,err}=getNumbers();
+  if(err || !nums.length) return [];
+  const et=ENERGY_TYPES[curEnergy], co=COMPANIES[curCompany], L=currentLayout();
+  const fmtName = LAYOUTS[curFormat].custom
+    ? `Custom ${L.labelW}" x ${L.labelH}" (${L.cols*L.rows}/sheet)`
+    : (LAYOUTS[curFormat].name || curFormat);
+  const date = new Date().toISOString().slice(0,10);
+  const yearFull = ($('qrYear').value||'').trim();
+  const site = ($('site').value||'').trim();
+  const by = ($('tech').value||'').trim() || 'Anonymous';
+  const batch = `BATCH-${date}-001`;
+  const ver = 'v'+VERSION;
+  return nums.map((n,i)=>({
+    seq:i+1, assetId:assetIdFor(n), energy:et.label, tag:fmt(n), site, year:yearFull,
+    company:co.label, format:fmtName, date, by, batch, status:'Generated', ver
+  }));
+}
+function fileBase(){
+  const {nums}=getNumbers();
+  if(nums && nums.length) return `${fmt(nums[0])}_to_${fmt(nums[nums.length-1])}`;
+  return 'labels';
+}
+
+async function buildManifestXLSX(rows){
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'Isolation Label Generator';
+  const ws = wb.addWorksheet('Manifest', { views: [{ state: 'frozen', xSplit: 1, ySplit: 1 }] });
+  ws.pageSetup = { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 };
+  ws.columns = MANIFEST_COLS.map(c => ({ header: c.header, key: c.key, width: c.width }));
+  const thin = { style: 'thin', color: { argb: 'FFD0D5DD' } };
+  const border = { top: thin, left: thin, bottom: thin, right: thin };
+  const hr = ws.getRow(1); hr.height = 22;
+  hr.eachCell(c => {
+    c.font = { name: 'Arial', bold: true, size: 10, color: { argb: 'FFFFFFFF' } };
+    c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1F2937' } };
+    c.alignment = { vertical: 'middle', horizontal: 'left' };
+    c.border = border;
+  });
+  rows.forEach(r => {
+    const row = ws.addRow(r);
+    row.eachCell({ includeEmpty: true }, (cell, col) => {
+      const key = MANIFEST_COLS[col - 1] && MANIFEST_COLS[col - 1].key;
+      if (!key) return;
+      cell.border = border;
+      cell.font = MONO_KEYS.has(key) ? { name: 'Consolas', size: 10 } : { name: 'Arial', size: 10 };
+      cell.alignment = { vertical: 'middle', horizontal: key === 'seq' ? 'right' : 'left' };
+      if (TEXT_KEYS.has(key)) cell.numFmt = '@';
+    });
+  });
+  ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: MANIFEST_COLS.length } };
+  const statusCol = MANIFEST_COLS.findIndex(c => c.key === 'status') + 1;
+  for (let i = 2; i <= rows.length + 1; i++) {
+    ws.getCell(i, statusCol).dataValidation = { type: 'list', allowBlank: false, formulae: [STATUS_LIST] };
+  }
+  const buf = await wb.xlsx.writeBuffer();
+  return new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+}
+function buildManifestCSV(rows){
+  const esc = v => '"' + (v == null ? '' : String(v)).replace(/"/g, '""') + '"';
+  const header = MANIFEST_COLS.map(c => esc(c.header)).join(',');
+  const lines  = rows.map(r => MANIFEST_COLS.map(c => esc(r[c.key])).join(','));
+  const csv = '\uFEFF' + [header, ...lines].join('\r\n');
+  return new Blob([csv], { type: 'text/csv;charset=utf-8' });
+}
+function downloadBlob(blob, name){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1500);
+}
+async function exportManifest(fmtSel){
+  const rows = manifestRows();
+  if(!rows.length) return;
+  try{
+    if(fmtSel==='xlsx'){
+      if(typeof ExcelJS==='undefined'){ alert('Excel library did not load \u2014 try CSV, or reload.'); return; }
+      downloadBlob(await buildManifestXLSX(rows), fileBase()+'_manifest.xlsx');
+    } else {
+      downloadBlob(buildManifestCSV(rows), fileBase()+'_manifest.csv');
+    }
+  }catch(e){ console.error(e); alert('Manifest export failed: '+(e.message||e)); }
+}
+
+/* ---------- QA proof sheet (fillable / non-fillable PDF) ---------- */
+function proofRun(){
+  const {nums,err}=getNumbers();
+  if(err || !nums.length) return null;
+  const et=ENERGY_TYPES[curEnergy], co=COMPANIES[curCompany], L=currentLayout();
+  const fmtLabel = LAYOUTS[curFormat].custom
+    ? `Custom ${L.labelW}" x ${L.labelH}" (${L.cols*L.rows}/sheet)`
+    : (LAYOUTS[curFormat].name || curFormat);
+  const date=new Date().toISOString().slice(0,10);
+  return {
+    energy:et.label, site:($('site').value||'').trim(), fmtLabel, ver:'v'+VERSION,
+    batch:`BATCH-${date}-001`, date, by:(($('tech').value||'').trim()||'Anonymous'),
+    rows: nums.map((n,i)=>({ seq:i+1, tag:fmt(n), assetId:assetIdFor(n) }))
+  };
+}
+function drawProofQR(doc, text, x, y, box){
+  const qr=qrcode(0,'M'); qr.addData(text); qr.make();
+  const n=qr.getModuleCount(), margin=2, cells=n+margin*2, cell=box/cells;
+  doc.setFillColor(255,255,255); doc.rect(x,y,box,box,'F');
+  doc.setFillColor(0,0,0);
+  for(let r=0;r<n;r++) for(let c=0;c<n;c++)
+    if(qr.isDark(r,c)) doc.rect(x+(c+margin)*cell, y+(r+margin)*cell, cell, cell, 'F');
+}
+function buildProofSheet(doc, run, opts){
+  const fillable=!!(opts&&opts.fillable);
+  const PT=72, M=0.6*PT, PW=8.5*PT, PH=11*PT;
+  const RED=[225,37,27], DARK=[31,41,55], GREY=[120,120,120], LINE=[205,208,213];
+  const W={ num:26, qr:52, tag:74, aid:128, scan:62 };
+  W.notes=(PW-2*M)-(W.num+W.qr+W.tag+W.aid+W.scan);
+  let LX=M; const col={};
+  ['num','qr','tag','aid','scan','notes'].forEach(k=>{ col[k]={ L:LX, w:W[k], c:LX+W[k]/2 }; LX+=W[k]; });
+  const rowH=52, firstRowY=M+72, bottomLimit=PH-M-72;
+  const rowsPerPage=Math.max(1, Math.floor((bottomLimit-firstRowY)/rowH));
+  const totalPages=Math.max(1, Math.ceil(run.rows.length/rowsPerPage));
+  function header(){
+    doc.setTextColor(...DARK); doc.setFont('helvetica','bold'); doc.setFontSize(16);
+    doc.text('Isolation Label \u2014 QA Proof Sheet', PW/2, M+4, { align:'center' });
+    doc.setDrawColor(...RED); doc.setLineWidth(2); doc.line(M, M+12, PW-M, M+12);
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...DARK);
+    doc.text(`Energy: ${run.energy}      Site: ${run.site||'\u2014'}      Format: ${run.fmtLabel}      Tool: ${run.ver}`, PW/2, M+27, { align:'center' });
+    doc.text(`Batch: ${run.batch}      Generated: ${run.date}      By: ${run.by}      Labels: ${run.rows.length}`, PW/2, M+40, { align:'center' });
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...GREY);
+    const hy=M+58;
+    doc.text('#', col.num.c, hy, {align:'center'});        doc.text('QR', col.qr.c, hy, {align:'center'});
+    doc.text('TAG', col.tag.c, hy, {align:'center'});      doc.text('ASSET ID', col.aid.c, hy, {align:'center'});
+    doc.text('SCANNED', col.scan.c, hy, {align:'center'}); doc.text('NOTES', col.notes.c, hy, {align:'center'});
+    doc.setDrawColor(...LINE); doc.setLineWidth(0.8); doc.line(M, M+64, PW-M, M+64);
+  }
+  for(let p=0;p<totalPages;p++){
+    if(p>0) doc.addPage();
+    header();
+    let y=firstRowY;
+    run.rows.slice(p*rowsPerPage,(p+1)*rowsPerPage).forEach(r=>{
+      const mid=y+rowH/2;
+      doc.setTextColor(...DARK); doc.setFont('helvetica','normal'); doc.setFontSize(9);
+      doc.text(String(r.seq), col.num.c, mid, {align:'center', baseline:'middle'});
+      const qb=38; drawProofQR(doc, r.assetId, col.qr.c-qb/2, mid-qb/2, qb);
+      doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.text(r.tag, col.tag.c, mid, {align:'center', baseline:'middle'});
+      doc.setFont('courier','normal'); doc.setFontSize(10); doc.text(r.assetId, col.aid.c, mid, {align:'center', baseline:'middle'});
+      const cs=16, cbx=col.scan.c-cs/2, cby=mid-cs/2;
+      doc.setDrawColor(110,110,110); doc.setLineWidth(1); doc.rect(cbx, cby, cs, cs);
+      const nw=col.notes.w-10, nh=30, nx=col.notes.c-nw/2, ny=mid-nh/2;
+      doc.setDrawColor(...LINE); doc.setLineWidth(0.8); doc.rect(nx, ny, nw, nh);
+      if(fillable){
+        const cb=new doc.AcroFormCheckBox(); cb.fieldName='scanned_'+r.tag; cb.Rect=[cbx,cby,cs,cs]; cb.appearanceState='Off'; doc.addField(cb);
+        const tf=new doc.AcroFormTextField(); tf.fieldName='notes_'+r.tag; tf.Rect=[nx,ny,nw,nh]; tf.fontSize=9; tf.multiline=true; doc.addField(tf);
+      }
+      y+=rowH; doc.setDrawColor(...LINE); doc.setLineWidth(0.4); doc.line(M, y, PW-M, y);
+    });
+    doc.setFontSize(8); doc.setTextColor(...GREY); doc.text(`Page ${p+1} of ${totalPages}`, PW-M-46, PH-M+10);
+    if(p===totalPages-1){
+      const sy=Math.min(y+26, PH-M-30), grpW=380, gx=(PW-grpW)/2;
+      doc.setTextColor(...DARK); doc.setFont('helvetica','normal'); doc.setFontSize(10);
+      doc.text('QA performed by:', gx, sy+3);
+      doc.setDrawColor(...LINE); doc.setLineWidth(0.8); doc.rect(gx+92, sy-9, 150, 16);
+      doc.text('Date:', gx+262, sy+3); doc.rect(gx+295, sy-9, 85, 16);
+      if(fillable){
+        const qaBy=new doc.AcroFormTextField(); qaBy.fieldName='qa_by'; qaBy.Rect=[gx+92, sy-9, 150, 16]; qaBy.fontSize=10; doc.addField(qaBy);
+        const qaDate=new doc.AcroFormTextField(); qaDate.fieldName='qa_date'; qaDate.Rect=[gx+295, sy-9, 85, 16]; qaDate.fontSize=10; doc.addField(qaDate);
+      }
+      doc.setFontSize(8); doc.setTextColor(...GREY);
+      const tip=fillable
+        ? 'Open in Acrobat or Edge to tick Scanned, type Notes, and fill QA by / Date \u2014 then Save to keep your marks.'
+        : 'Print this sheet. Scan each QR, confirm it matches the row\u2019s Asset ID, then tick Scanned and add notes by hand.';
+      doc.text(tip, PW/2, sy+24, { align:'center' });
+    }
+  }
+  return totalPages;
+}
+function exportProofSheet(fillable){
+  const run=proofRun();
+  if(!run || !run.rows.length) return;
+  const pages=Math.ceil(run.rows.length/10);
+  if(pages>10 && !confirm(`This will be roughly ${pages} pages for ${run.rows.length} labels. Continue?`)) return;
+  try{
+    const { jsPDF }=window.jspdf;
+    const doc=new jsPDF({ unit:'pt', format:'letter' });
+    buildProofSheet(doc, run, { fillable });
+    downloadBlob(doc.output('blob'), fileBase()+(fillable?'_proofsheet.pdf':'_proofsheet_print.pdf'));
+  }catch(e){ console.error(e); alert('Proof sheet export failed: '+(e.message||e)); }
 }
 
 /* ---------- wiring ---------- */
@@ -880,10 +1171,22 @@ function setStyle(s){ curStyle=s; $('styleModern').setAttribute('aria-selected',
 $('styleModern').onclick = ()=>setStyle('modern');
 $('styleClassic').onclick = ()=>setStyle('classic');
 ['start','end','list','prefix','pad','phone','site','qrYear','tech'].forEach(id=> $(id).addEventListener('input', refresh));
-['showSite','showQR'].forEach(id=> $(id).addEventListener('change', refresh));
+['showSite','showQR','showAsset'].forEach(id=> $(id).addEventListener('change', refresh));
 ['cPage','cContent','cW','cH','cCols','cRows','cML','cMT','cGX','cGY','cR'].forEach(id=> $(id).addEventListener('input', applyFormat));
 ['start','end','prefix','pad','phone'].forEach(id=> $(id).addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); generate(); } }));
 $('go').onclick = generate;
+
+/* manifest & QA proof-sheet popovers */
+function closeActionMenus(except){ ['manifestMenu','qaMenu'].forEach(id=>{ const m=$(id); if(m && id!==except) m.hidden=true; }); }
+$('btnManifest').onclick = (e)=>{ e.stopPropagation(); if($('btnManifest').disabled) return; const m=$('manifestMenu'); const open=m.hidden; closeActionMenus(); m.hidden=!open; };
+$('btnQA').onclick = (e)=>{ e.stopPropagation(); if($('btnQA').disabled) return; const m=$('qaMenu'); const open=m.hidden; closeActionMenus(); m.hidden=!open; };
+document.addEventListener('click', (e)=>{ if(!e.target.closest('.menu-wrap')) closeActionMenus(); });
+document.querySelectorAll('#manifestMenu .popitem').forEach(it=>{
+  it.onclick = ()=>{ $('manifestMenu').hidden=true; exportManifest(it.dataset.fmt); };
+});
+document.querySelectorAll('#qaMenu .popitem').forEach(it=>{
+  it.onclick = ()=>{ $('qaMenu').hidden=true; exportProofSheet(it.dataset.fill==='fillable'); };
+});
 
 $('verBadge').textContent = 'v'+VERSION;
 $('buildDate').textContent = BUILD_DATE;
