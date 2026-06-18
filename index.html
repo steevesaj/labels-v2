@@ -156,7 +156,7 @@
     </div>
     <div>
       <h1>Isolation Label Generator</h1>
-      <div class="meta">Pick a format, energy type &amp; company &middot; print-ready PDF tag sheets</div>
+      <div class="meta">Modernized label layout &middot; filled header, QR-forward &middot; print-ready PDF</div>
     </div>
     <div class="right">
       <span class="pill">Build <span id="buildDate"></span></span>
@@ -211,6 +211,14 @@
           <div class="row blk">
             <div><label class="fld" for="energy">Energy type</label><select id="energy"></select></div>
             <div><label class="fld" for="company">Company</label><select id="company"></select></div>
+          </div>
+
+          <div class="blk">
+            <label class="fld">Label style</label>
+            <div class="seg" role="tablist">
+              <button id="styleModern" role="tab" aria-selected="true">Modern (new)</button>
+              <button id="styleClassic" role="tab" aria-selected="false">Classic (old)</button>
+            </div>
           </div>
 
           <div class="divider"></div>
@@ -335,7 +343,7 @@
      LAYOUTS       -> page size, grid, label size, margins, gaps (Avery presets + Custom)
    ASSETS load by relative path; serve /assets beside this file (GitHub Pages).
    ========================================================================= */
-const VERSION = "2.3.0";
+const VERSION = "2.3.1-preview";
 const BUILD_DATE = "2026-06-17";
 const PT = 72;
 const LS = 'ilg.settings';
@@ -377,6 +385,7 @@ const LAYOUTS = {
 const BLACK=[0,0,0], GREY=[150,150,150];
 
 let mode='range', curFormat='ol996wj', curEnergy='electrical', curCompany='psg';
+let curStyle='modern';
 let pvIndex=0;
 function previewNums(){ return getNumbers().nums; }
 function clampPvIndex(){ const n=previewNums().length; if(pvIndex<0)pvIndex=0; if(n && pvIndex>n-1)pvIndex=n-1; if(!n)pvIndex=0; }
@@ -510,53 +519,135 @@ function fitFont(pen, text, maxW, startPt, minPt){ let fs=startPt, g=0; while(fs
 
 /* ---------- content drawers (theme-aware, scale to the label box; pen = PDF or canvas) ---------- */
 function drawIso(pen,x,y,w,h,c){
-  const cx=x+w/2, ins=h*0.045, r=(c.radius!=null?c.radius:h*0.0625);
-  if(!isWhite(c.bg)) pen.fillRoundRect(x+h*0.015,y+h*0.015,w-h*0.03,h-h*0.03,h*0.075,c.bg);
-  pen.strokeRoundRect(x+ins,y+ins,w-2*ins,h-2*ins,r,c.col,Math.max(1,h*0.015));
-  // header (auto-fit to one line)
-  pen.text(c.header,cx,y+h*0.150, fitFont(pen,c.header,w*0.92,h*0.072,h*0.04), c.col,'center',true);
+  const ins=h*0.05;
+  const r=(c.radius!=null?c.radius:h*0.07);
+  const ix=x+ins, iy=y+ins, iw=w-2*ins, ih=h-2*ins;
+  const cx=x+w/2;
+  if(!isWhite(c.bg)) pen.fillRoundRect(ix, iy, iw, ih, r, c.bg);
 
-  // vertical content band between header and footer
-  const bandTop=y+h*0.225, bandBot=y+h*0.855, bandCy=(bandTop+bandBot)/2, bandH=bandBot-bandTop;
+  // four stacked zones (fractions of interior height): header / main / footer / warning
+  const headBot=iy+ih*0.235;
+  const mTop=headBot,  mBot=iy+ih*0.640;
+  const fTop=mBot,     fBot=iy+ih*0.845;
+  const wTop=fBot;
+  const mainCy=(mTop+mBot)/2, mainH=mBot-mTop;
 
-  // energy symbol (left)
-  const symBoxH=h*0.42;
-  if(c.sym) pen.fitImage(c.sym,'PNG', x+w*0.075, bandCy-symBoxH/2, w*0.22, symBoxH, c.symAlias);
+  // --- header + underline rule ---
+  pen.text(c.header, cx, iy+ih*0.150, fitFont(pen,c.header,iw*0.92,h*0.092,h*0.046), c.col,'center',true);
+  pen.fillRect(ix+iw*0.05, headBot-ih*0.050, iw*0.90, Math.max(0.7,h*0.0065), c.col);
 
-  // QR (right) + human-readable asset id running vertically along the edge
-  let qrX=null, qrS=0; const vstrip=h*0.085;
+  // --- QR (right) first so it anchors the main row; asset id sits beneath it ---
+  let qrLeft=ix+iw, rowCy=mainCy;
   if(c.qr){
-    qrS=Math.min(bandH*0.82, w*0.235);
-    qrX=x+w-ins-vstrip-qrS; const qrY=bandCy-qrS/2;
+    const qrS=Math.min(mainH*0.80, w*0.22);
+    const qrX=ix+iw-w*0.02-qrS, qrY=mTop+mainH*0.02;
     drawQR(pen, c.qr, qrX, qrY, qrS);
+    qrLeft=qrX; rowCy=qrY+qrS/2;
     if(c.assetId){
-      const fs=fitFont(pen, c.assetId, qrS+bandH*0.12, h*0.05, h*0.03);
-      const tw=pen.measure(c.assetId, fs, true);
-      pen.textRot(c.assetId, x+w-ins-vstrip*0.42 + fs*0.34, bandCy+tw/2, fs, c.col, true);
+      const fs=fitFont(pen, c.assetId, qrS+w*0.06, h*0.040, h*0.024);
+      pen.text(c.assetId, qrX+qrS/2, qrY+qrS+h*0.046, fs, BLACK,'center',false);
     }
   }
 
-  // centered stack region (between symbol and QR/edge), auto-sized to fit
-  const leftLim = x + w*0.32;
-  const rightLim = c.qr ? (qrX - w*0.02) : (x + w - ins - w*0.02);
-  const colCx = (leftLim + rightLim)/2;
-  const maxW = Math.max(w*0.2, rightLim - leftLim);
+  // --- hazard symbol (left), centered on the main row ---
+  const symH=mainH*0.90;
+  if(c.sym) pen.fitImage(c.sym,'PNG', ix+w*0.01, rowCy-symH/2, w*0.20, symH, c.symAlias);
 
-  const gap=h*0.026;
-  const siteFs = c.siteCode ? fitFont(pen, c.siteCode, maxW, h*0.078, h*0.04) : 0;
-  const numFs  = fitFont(pen, c.text, maxW*0.98, c.qr?h*0.165:h*0.185, h*0.07);
-  const logoH  = c.logo ? h*0.17 : h*0.05;
-  const phoneFs= fitFont(pen, c.phone, maxW, h*0.082, h*0.05);
-  const total = numFs + gap + logoH + gap + phoneFs + (c.siteCode ? siteFs+gap : 0);
-  let cyc = bandCy - total/2;
-  if(c.siteCode){ pen.text(c.siteCode, colCx, cyc+siteFs*0.8, siteFs, c.col,'center',true); cyc+=siteFs+gap; }
-  pen.text(c.text, colCx, cyc+numFs*0.78, numFs, c.num,'center',true); cyc+=numFs+gap;
-  if(c.logo){ const lbW=Math.min(w*0.30, maxW*0.95); pen.fitImage(c.logo,c.logoFmt, colCx-lbW/2, cyc, lbW, logoH, c.logoAlias); }
-  else pen.text('[ logo ]', colCx, cyc+logoH*0.8, h*0.05, GREY,'center',false);
-  cyc+=logoH+gap;
-  pen.text(c.phone, colCx, cyc+phoneFs*0.78, phoneFs, BLACK,'center',true);
+  // --- number column between symbol and QR (mirrored right margin when no QR) ---
+  const colL=ix+w*0.22;
+  const colR=c.qr ? qrLeft-w*0.025 : ix+iw-w*0.20;
+  const colCx=(colL+colR)/2, colW=Math.max(w*0.2, colR-colL);
+  if(c.siteCode){
+    const siteFs=fitFont(pen, c.siteCode, colW, h*0.078, h*0.04);
+    const numFs =fitFont(pen, c.text, colW*0.98, h*0.21, h*0.075);
+    const gap=h*0.012, tot=siteFs+gap+numFs;
+    let ty=rowCy-tot/2;
+    pen.text(c.siteCode, colCx, ty+siteFs*0.82, siteFs, c.col,'center',true); ty+=siteFs+gap;
+    pen.text(c.text, colCx, ty+numFs*0.80, numFs, c.num,'center',true);
+  } else {
+    const numFs=fitFont(pen, c.text, colW*0.98, h*0.25, h*0.08);
+    pen.text(c.text, colCx, rowCy+numFs*0.34, numFs, c.num,'center',true);
+  }
 
-  pen.text('DO NOT REMOVE THIS TAG',cx,y+h*0.915,h*0.052,c.col,'center',true);
+  // --- footer: logo (left) + phone (right), vertically centered ---
+  const fCy=(fTop+fBot)/2, fH=fBot-fTop;
+  if(c.logo){ const lh=fH*0.86, lw=Math.min(iw*0.50, w*0.36); pen.fitImage(c.logo,c.logoFmt, ix+iw*0.04, fCy-lh/2, lw, lh, c.logoAlias); }
+  else pen.text('[ logo ]', ix+iw*0.18, fCy+h*0.018, h*0.05, GREY,'center',false);
+  pen.text(c.phone, ix+iw-iw*0.04, fCy+h*0.018, fitFont(pen,c.phone,iw*0.48,h*0.072,h*0.042), BLACK,'right',true);
+
+  // --- warning band: rule + bold caption ---
+  pen.fillRect(ix+iw*0.05, wTop+ih*0.01, iw*0.90, Math.max(0.7,h*0.0065), c.col);
+  const warnFs=fitFont(pen,'DO NOT REMOVE THIS TAG',iw*0.92,h*0.060,h*0.034);
+  pen.text('DO NOT REMOVE THIS TAG', cx, (wTop+(iy+ih))/2 + warnFs*0.36, warnFs, c.col,'center',true);
+
+  // --- crisp outer border last ---
+  pen.strokeRoundRect(ix, iy, iw, ih, r, c.col, Math.max(1, h*0.016));
+}
+/* MODERN style — filled red header banner; centered number, hazard+site row,
+   and phone/DO-NOT-REMOVE/logo stack. QR (when on) sits upper-right and the
+   content column recenters into the space left of it. Adapts when QR/site absent. */
+function drawIsoModern(pen,x,y,w,h,c){
+  const ins=h*0.04, r=(c.radius!=null?c.radius:h*0.085);
+  // base fill (theme bg or white), clipped to rounded label
+  pen.fillRoundRect(x+ins, y+ins, w-2*ins, h-2*ins, r, isWhite(c.bg)?[255,255,255]:c.bg);
+  // header band: rounded top, squared bottom
+  const bx=x+ins, by=y+ins, bw=w-2*ins, bh=h*0.180;
+  pen.fillRoundRect(bx, by, bw, bh, r, c.col);
+  pen.fillRect(bx, by+bh*0.5, bw, bh*0.55, c.col);
+  pen.text(c.header, x+w/2, by+bh*0.70, fitFont(pen, c.header, bw*0.92, h*0.090, h*0.05), [255,255,255], 'center', true);
+
+  const bodyTop=by+bh, bodyBot=y+h-ins, bodyH=bodyBot-bodyTop, interiorR=x+w-ins;
+
+  // QR upper-right (optional) — asset id sits beneath it
+  let qrLeft=interiorR;
+  if(c.qr){
+    const qrS=Math.min(bodyH*0.46, w*0.30);
+    const qrX=interiorR-w*0.04-qrS, qrY=bodyTop+bodyH*0.06;
+    drawQR(pen, c.qr, qrX, qrY, qrS);
+    qrLeft=qrX;
+    if(c.assetId){
+      const fs=fitFont(pen, c.assetId, qrS+w*0.06, h*0.042, h*0.024);
+      pen.text(c.assetId, qrX+qrS/2, qrY+qrS+h*0.054, fs, BLACK, 'center', false);
+    }
+  }
+
+  // content column = everything except the QR; horizontally centered within its width
+  const colL=x+ins+w*0.04;
+  const colR=(c.qr ? qrLeft - w*0.03 : interiorR - w*0.04);
+  const colCx=(colL+colR)/2, colW=Math.max(w*0.2, colR-colL);
+
+  // number (centered, large)
+  const numFs=fitFont(pen, c.text, colW, h*0.21, h*0.085);
+  pen.text(c.text, colCx, bodyTop+bodyH*0.270, numFs, c.num, 'center', true);
+
+  // hazard symbol + site code, centered as a single group
+  const haveSite=!!c.siteCode;
+  const rowCy=bodyTop+bodyH*0.46;
+  const triH=bodyH*(haveSite?0.30:0.36);
+  const triW=c.sym?triH:0;
+  let siteFs=0, siteW=0;
+  if(haveSite){ siteFs=fitFont(pen, c.siteCode, colW*0.62, h*0.16, h*0.05); siteW=pen.measure(c.siteCode, siteFs, true); }
+  const innerGap=(c.sym&&haveSite)?w*0.035:0;
+  const groupW=triW+innerGap+siteW;
+  let gx=colCx-groupW/2;
+  if(c.sym){ pen.fitImage(c.sym,'PNG', gx, rowCy-triH/2, triW, triH, c.symAlias); gx+=triW+innerGap; }
+  if(haveSite){ pen.text(c.siteCode, gx, rowCy+siteFs*0.34, siteFs, c.num, 'left', true); }
+
+  // footer: DO NOT REMOVE (centered) above a logo-left / phone-right row, anchored above the bottom edge
+  const fgap=h*0.020, botMargin=h*0.048;
+  const dnrFs=fitFont(pen,'DO NOT REMOVE THIS TAG', bw*0.90, h*0.058, h*0.036);
+  const phoneFs=fitFont(pen, c.phone, bw*0.44, h*0.075, h*0.044);
+  const logoH=c.logo?bodyH*0.16:h*0.05;
+  const rowH=Math.max(logoH, phoneFs*1.1);
+  let fy=bodyBot-(dnrFs+fgap+rowH)-botMargin;
+  pen.text('DO NOT REMOVE THIS TAG', x+w/2, fy+dnrFs*0.8, dnrFs, c.col, 'center', true);
+  const rCy=fy+dnrFs+fgap+rowH/2;
+  if(c.logo){ const lw=Math.min(w*0.40, bw*0.44); pen.fitImage(c.logo,c.logoFmt, bx+bw*0.04, rCy-logoH/2, lw, logoH, c.logoAlias); }
+  else pen.text('[ logo ]', bx+bw*0.16, rCy+h*0.018, h*0.045, GREY, 'center', false);
+  pen.text(c.phone, bx+bw-bw*0.04, rCy+phoneFs*0.34, phoneFs, BLACK, 'right', true);
+
+  // crisp outer border last
+  pen.strokeRoundRect(x+ins, y+ins, w-2*ins, h-2*ins, r, c.col, Math.max(1, h*0.02));
 }
 function drawCompact(pen,x,y,w,h,c){
   const ins=h*0.06, r=(c.radius!=null?c.radius:h*0.12);
@@ -613,6 +704,7 @@ function buildCtx(L){
     logo:logoCache[curCompany]||null, logoFmt:co.fmt, logoAlias:'logo-'+curCompany,
     radius:(L.custom?L.radiusPt:null),
     siteCode:($('showSite').checked && site && L.content!=='compact')?site:null,
+    style:curStyle,
     showQR:($('showQR').checked && L.content!=='compact'), qr:null, assetId:null };
 }
 
@@ -676,7 +768,7 @@ function drawPreview(){
   cv.style.width=(LW*S)+'px'; cv.style.height=(LH*S)+'px';
   const ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,LW*S,LH*S);
   ctx.fillStyle='#fff'; ctx.fillRect(0,0,LW*S,LH*S);
-  const drawer = (L.content==='compact') ? drawCompact : drawIso;
+  const drawer = (L.content==='compact') ? drawCompact : (c.style==='classic' ? drawIso : drawIsoModern);
   drawer(canvasPen(ctx,S), 0, 0, LW, LH, c);
 }
 
@@ -726,7 +818,7 @@ async function generate(){
     });
     const ctx=buildCtx(L);
     const pen=pdfPen(doc);
-    const drawer = (L.content==='compact') ? drawCompact : drawIso;
+    const drawer = (L.content==='compact') ? drawCompact : (curStyle==='classic' ? drawIso : drawIsoModern);
     const CHUNK=50;
     for(let i=0;i<nums.length;i++){
       if(i>0 && i%g.perPage===0) doc.addPage();
@@ -755,7 +847,7 @@ function saveSettings(){
     const cust={}; CUSTOM_FIELDS.forEach(id=> cust[id]=$(id).value);
     localStorage.setItem(LS, JSON.stringify({ format:curFormat, energy:curEnergy, company:curCompany, mode,
       start:$('start').value, end:$('end').value, list:$('list').value, prefix:$('prefix').value, pad:$('pad').value, phone:$('phone').value,
-      site:$('site').value, qrYear:$('qrYear').value, showSite:$('showSite').checked, showQR:$('showQR').checked, cust }));
+      site:$('site').value, qrYear:$('qrYear').value, showSite:$('showSite').checked, showQR:$('showQR').checked, style:curStyle, cust }));
   }catch(e){}
 }
 function restoreInputs(s){
@@ -790,6 +882,9 @@ $('pvPrev').onclick = ()=>stepPreview(-1);
 $('pvNext').onclick = ()=>stepPreview(1);
 $('tabRange').onclick = ()=>setMode('range');
 $('tabList').onclick  = ()=>setMode('list');
+function setStyle(s){ curStyle=s; $('styleModern').setAttribute('aria-selected', s==='modern'); $('styleClassic').setAttribute('aria-selected', s==='classic'); refresh(); }
+$('styleModern').onclick = ()=>setStyle('modern');
+$('styleClassic').onclick = ()=>setStyle('classic');
 ['start','end','list','prefix','pad','phone','site','qrYear'].forEach(id=> $(id).addEventListener('input', refresh));
 ['showSite','showQR'].forEach(id=> $(id).addEventListener('change', refresh));
 ['cPage','cContent','cW','cH','cCols','cRows','cML','cMT','cGX','cGY','cR'].forEach(id=> $(id).addEventListener('input', applyFormat));
@@ -815,9 +910,11 @@ try{ SAVED=JSON.parse(localStorage.getItem(LS)||'null'); }catch(e){}
 if(SAVED){
   if(LAYOUTS[SAVED.format]) curFormat=SAVED.format;
   if(ENERGY_TYPES[SAVED.energy]) curEnergy=SAVED.energy;
+  if(SAVED.style==='classic'||SAVED.style==='modern') curStyle=SAVED.style;
   if(SAVED.mode==='list') mode='list';
 }
 $('format').value=curFormat; $('energy').value=curEnergy;
+setStyle(curStyle);
 restoreInputs(SAVED);                 // custom fields needed before applyFormat geometry
 applyFormat();
 (async ()=>{
