@@ -40,7 +40,7 @@ The file is static, so any static host works. Pick one:
 Everything you'd change lives at the top of the `<script>` block in the HTML.
 
 - **Geometry / calibration (most important):** the `MARGIN_*`, `GUTTER`, and `LABEL_*` constants are points (72 pt = 1 inch), set to Avery 5163. If tags print misaligned, nudge these and re-test. **Always test-print on the real stock before rollout.**
-- **Logo:** paste the logo's base64 data URL into `LOGO_DATAURL` to bake it into the file permanently. (The in-page "Load logo" picker is for testing only — it doesn't persist.)
+- **Logos / symbols:** stored in `/assets/logos` and `/assets/symbols`, referenced from the `ENERGY_TYPES` (symbols), `COMPANIES` (logos), and `LAYOUTS` (formats) config objects at the top of the HTML. The tool expects one symbol per energy type: `electrical.svg`, `gas.svg`, `pneumatic.svg`, `gravity.svg`, `water.svg`, `hydraulic.svg`, and one logo per company: `pgs-logo.jpg`, `magna-logo.png`. To change one, replace the file (keep the filename, or edit the config path). To add a type, company, or format, add a config entry — the dropdowns, preview, and PDF all read from the config. A missing file shows a placeholder + hint instead of breaking. Symbol SVGs are rasterized at high resolution for the PDF.
 - **Fixed text / phone:** phone and prefix are editable in the UI; the header and footer text are in the `drawLabel()` function.
 - **New label types later:** the engine is structured so additional companies/label types become config, not a rewrite.
 
@@ -55,13 +55,29 @@ Semantic Versioning — `MAJOR.MINOR.PATCH`:
 - **MAJOR** (`x.0.0`) — structural redesign or any breaking change.
 
 The version is the single source of truth in one constant (`VERSION`) and surfaces in three places:
-1. The **header badge** in the UI (`v1.0.0`).
+1. The **header badge** in the UI (`v1.3.0`).
 2. The **PDF metadata** of every generated sheet (creator + keywords include the version, the generation date, and the tag range) — so any printed sheet is traceable to the exact build and parameters that produced it.
 3. The **changelog** below.
 
 **To release a new version:** update `VERSION` and `BUILD_DATE` at the top of the file, add a changelog entry, and (if using git) tag the commit `vX.Y.Z`.
 
 ### Changelog
+
+#### v1.3.0 — 2026-06-17
+- **Label-format selector** (`LAYOUTS` config): Isolation 2"×4" 10-up (Avery 5163/8163, default), Large warning 3⅓"×4" 6-up (5164/8164), Small asset ID 1"×2⅝" 30-up (5160/8160), plus a **Custom sheet builder** (page Letter/A4, label W/H, columns/rows, margins, gaps, corner radius). Geometry is generic — label content scales to the box.
+- **Six energy types** with confirmed prefix / pad / default brand: Electrical `E-` (pad 4), Gas `G-` (3), Pneumatic `P-` (3), Gravity `GR-` (3), Water `W-` (3), Hydraulic `H-` (4). Hydraulic defaults the brand to Magna IV; the others to PSG. Selecting a type also sets the default company (still overridable).
+- **Responsive generation** (merged from the field-optimized build): progress bar + chunked render loop (`requestAnimationFrame`) so the UI never freezes, plus `compress:true` and a >1,500-label confirm.
+- Retained **image aliasing** — each symbol/logo is embedded once and referenced, so a full 1,000-number band stays small and fast.
+
+#### v1.2.0 — 2026-06-17
+- **Energy-type selector** (Electrical / Gas / Pneumatic / Gravity / Water) — changes the header text, the hazard symbol, and the default prefix together. Driven by the `ENERGY_TYPES` config at the top of the HTML; add a type by adding a config entry plus its `assets/symbols/<type>.svg` file.
+- **Company selector** (Power Solutions Group / Magna IV Engineering) — swaps the logo and the default phone. Driven by the `COMPANIES` config.
+- **Scale fix** — images are encoded once and reused via jsPDF aliasing, so large batches (a full 1,000-number band) render without crashing the tab.
+- Graceful fallback: a missing symbol/logo file shows a placeholder and a "Missing asset file(s)" hint instead of breaking; the PDF still generates.
+
+#### v1.1.0 — 2026-06-17
+- Real PSG logo and hazard-triangle symbol now pulled from `/assets` (relative paths) in place of the placeholder.
+- Switched asset handling from base64-embed to repo-relative references — to swap an asset, replace the file in the repo (no code change).
 
 #### v1.0.0 — 2026-06-17
 - Initial release. Isolation-point tags (proof of concept).
