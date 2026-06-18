@@ -55,13 +55,25 @@ Semantic Versioning — `MAJOR.MINOR.PATCH`:
 - **MAJOR** (`x.0.0`) — structural redesign or any breaking change.
 
 The version is the single source of truth in one constant (`VERSION`) and surfaces in three places:
-1. The **header badge** in the UI (`v1.4.0`).
+1. The **header badge** in the UI (`v1.6.0`).
 2. The **PDF metadata** of every generated sheet (creator + keywords include the version, the generation date, and the tag range) — so any printed sheet is traceable to the exact build and parameters that produced it.
 3. The **changelog** below.
 
 **To release a new version:** update `VERSION` and `BUILD_DATE` at the top of the file, add a changelog entry, and (if using git) tag the commit `vX.Y.Z`.
 
 ### Changelog
+
+#### v1.6.0 — 2026-06-17
+- **New asset ID format** — `{site}-{prefix}{number}-{YY}`, e.g. `YVR6-E-0007-26` (site code · energy type · asset number · last two digits of the year). This is the string the QR encodes. Previously `{year}-{site}-{prefix}{number}`.
+- **Human-readable asset ID on the label** — when the QR is on, the asset ID also prints vertically along the right edge beside the QR, so the tag is identifiable by eye as well as by scan. The QR shifts in slightly to reserve the edge strip.
+- **Asset ID breakdown under the preview** — shows the assembled ID with a labelled legend (site · energy · asset no. · year) so anyone can see what each part means.
+- **Text now fits the space it's given** — the header, number, logo, and phone are measured and auto-sized to fit the available width on each format. This fixes crowding/overflow on the taller 3⅓" × 4" warning format when the QR is on, and protects against long site codes or wide numbers on any format.
+
+#### v1.5.0 — 2026-06-17
+- **Site code toggle** — optional small line above the number (e.g., `YVR6`); the layout reflows when it's on or off. The site code field feeds both this line and the QR asset ID.
+- **Scannable QR toggle** — the QR is unique per label, so when it's on the number/logo/phone recenter and the QR sits on the right. Empty year/site segments are dropped. QR generation uses `qrcode-generator` (cdnjs); if it fails to load, the toggle warns and is skipped rather than crashing.
+- Both toggles apply to the full-tag formats (Isolation, Large warning, Custom-iso), not the small 1" ID label.
+- Heads-up: QR runs are heavier than plain runs — each label embeds a unique QR image (no de-duplication possible), so large QR batches take longer and produce bigger files.
 
 #### v1.4.0 — 2026-06-17
 - **Per-type colour themes** (`THEMES` config): the perimeter, header, number, and footer take the energy type's colour; the **phone number stays black**; the background can differ. Electrical = red on white (black number, per legacy), Gas = orange on white, Pneumatic = blue on white, Gravity = black on **yellow**, Water = teal on white, Hydraulic = blue on white. Symbol artwork keeps its own colours.
