@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Isolation Label Generator</title>
+<meta name="description" content="Generate print-ready lockout/tagout isolation labels with QR asset tags, batch PDF and manifest export.">
+<meta name="theme-color" content="#10151d">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%2310151d'/%3E%3Cpolygon points='50,16 86,80 14,80' fill='%23FFD200' stroke='%2310151d' stroke-width='4' stroke-linejoin='round'/%3E%3Cpolygon points='54,33 35,59 48,59 43,75 64,49 51,49' fill='%2310151d'/%3E%3C/svg%3E">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
@@ -21,9 +24,9 @@
     --shadow:0 1px 2px rgba(16,20,27,.04), 0 6px 22px rgba(16,20,27,.06);
   }
   :root[data-theme="dark"]{
-    --bg:#0e131a; --surface:#161d27; --surface-2:#1b232e;
-    --ink:#e7ecf2; --ink-2:#aeb8c4; --muted:#7f8b99; --line:#2a333f; --line-2:#222a34;
-    --accent-soft:oklch(0.34 0.08 264);
+    --bg:#111418; --surface:#191d23; --surface-2:#20242b;
+    --ink:#e8eaed; --ink-2:#b0b6bd; --muted:#828990; --line:#2c3138; --line-2:#24282e;
+    --accent-soft:oklch(0.34 0.07 264);
     --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.4);
   }
   *{box-sizing:border-box}
@@ -36,7 +39,7 @@
     transition:background-color .2s, color .2s;
   }
   :root[data-theme="dark"] body{ background-image:radial-gradient(circle at 1px 1px, rgba(255,255,255,.045) 1px, transparent 0); }
-  .shell{max-width:1120px; margin:0 auto; padding:30px 24px 72px}
+  .shell{max-width:1240px; margin:0 auto; padding:30px 28px 72px}
 
   .top{display:flex; align-items:center; gap:14px; margin-bottom:26px}
   .mark{width:42px; height:42px; flex:none; display:grid; place-items:center; background:#10151d; border-radius:11px; box-shadow:var(--shadow)}
@@ -44,7 +47,7 @@
   .top h1{font-size:19px; font-weight:700; margin:0; letter-spacing:-.01em}
   .top .meta{font-size:12.5px; color:var(--muted); margin-top:1px}
   .top .right{margin-left:auto; display:flex; align-items:center; gap:10px}
-  .pill{font-family:var(--mono); font-size:11px; font-weight:500; color:var(--ink-2); background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:5px 11px; box-shadow:var(--shadow)}
+  .pill{font-family:var(--mono); font-size:11px; font-weight:500; color:var(--ink-2); background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:5px 11px; box-shadow:var(--shadow); white-space:nowrap}
   .pill b{color:var(--accent)}
   .icon-btn{display:grid; place-items:center; cursor:pointer; padding:6px 9px; background:var(--surface); border:1px solid var(--line); border-radius:999px; box-shadow:var(--shadow); color:var(--ink-2); transition:.13s}
   .icon-btn:hover{color:var(--ink); border-color:#cfd6df}
@@ -53,14 +56,19 @@
   :root[data-theme="dark"] .i-sun{display:block}
   :root[data-theme="dark"] .i-moon{display:none}
 
-  .grid{display:grid; grid-template-columns:1.05fr 0.95fr; gap:22px; align-items:start}
-  @media(max-width:880px){.grid{grid-template-columns:1fr}}
+  .grid{display:grid; grid-template-columns:minmax(0,1fr) minmax(380px,440px); gap:24px; align-items:start}
+  @media(max-width:920px){.grid{grid-template-columns:1fr}}
+  .pv-col{position:sticky; top:24px}
+  @media(max-width:920px){.pv-col{position:static}}
 
   .card{background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow)}
-  .card .pad{padding:22px}
+  .card .pad{padding:20px}
+  .sec{display:flex; align-items:center; gap:12px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin:22px 0 14px}
+  .sec::after{content:''; flex:1; height:1px; background:var(--line-2)}
   .card + .card{margin-top:22px}
   .card-head{display:flex; align-items:center; gap:10px; padding:16px 22px; border-bottom:1px solid var(--line-2)}
   .card-head h2{font-size:13px; font-weight:600; margin:0; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-2)}
+  .tag-n{white-space:nowrap}
   .card-head .tag-n{margin-left:auto; font-family:var(--mono); font-size:12px; color:var(--muted)}
 
   .seg{display:flex; background:var(--surface-2); border:1px solid var(--line); border-radius:11px; padding:4px; margin-bottom:18px}
@@ -74,11 +82,16 @@
     background-repeat:no-repeat; background-position:right 13px center; padding-right:34px}
   input:hover,textarea:hover,select:hover{border-color:#d3d9e2}
   input:focus,textarea:focus,select:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); background:var(--surface)}
+  /* keyboard focus visibility (mouse clicks stay clean via :focus-visible) */
+  .seg button:focus-visible, .style-toggle:focus-visible, .btn2:focus-visible, .go:focus-visible,
+  .pv-arrow:focus-visible, .icon-btn:focus-visible, .tog-h:focus-within, .popitem:focus-visible,
+  .popcheck:focus-within, .reset-link:focus-visible{
+    outline:2px solid var(--accent); outline-offset:2px; border-radius:8px;
+  }
+  .switch input:focus-visible + .track{outline:2px solid var(--accent); outline-offset:2px}
   input.mono,textarea{font-family:var(--mono)}
   input[type=number]{-moz-appearance:textfield}
   input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
-  input.spin{-moz-appearance:auto}
-  input.spin::-webkit-outer-spin-button,input.spin::-webkit-inner-spin-button{-webkit-appearance:auto; opacity:1}
   textarea{min-height:80px; resize:vertical; line-height:1.5}
   .row{display:flex; gap:14px}
   .ingrp{display:flex; align-items:center; background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:0 12px; transition:.12s}
@@ -89,7 +102,7 @@
   .fitrow{display:flex; gap:10px}
   .fitrow input{font-size:12px; padding-left:7px; padding-right:5px}
   .row>div{flex:1}
-  .blk{margin-bottom:18px}
+  .blk{margin-bottom:16px}
   .blk:last-child{margin-bottom:0}
   .hint{font-size:12px; color:var(--muted); margin-top:7px}
   .divider{height:1px; background:var(--line-2); margin:6px 0 18px}
@@ -97,10 +110,19 @@
   .style-toggle:hover{border-color:#d3d9e2}
   .style-toggle .st-lab{font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--muted)}
   .style-toggle .st-val{font-size:13.5px; font-weight:600; color:var(--ink)}
-  .style-toggle .st-caret{margin-left:auto; width:15px; height:15px; color:var(--muted); transition:transform .18s}
+  .style-toggle .st-caret{width:14px; height:14px; transition:transform .18s}
   .style-toggle[aria-expanded="true"] .st-caret{transform:rotate(180deg)}
+  .st-edit{margin-left:auto; display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border-radius:999px; font-size:11.5px; font-weight:700; letter-spacing:.02em; color:var(--accent); background:var(--accent-soft); transition:.13s}
+  .style-toggle:hover .st-edit{filter:brightness(1.04)}
+  .style-toggle .st-edit .lbl-open{display:inline}
+  .style-toggle .st-edit .lbl-close{display:none}
+  .style-toggle[aria-expanded="true"] .st-edit .lbl-open{display:none}
+  .style-toggle[aria-expanded="true"] .st-edit .lbl-close{display:inline}
   .style-panel{margin-top:12px}
   .style-panel[hidden]{display:none}
+  .reset-link{margin-left:auto; display:inline-flex; align-items:center; gap:6px; padding:5px 10px; font:inherit; font-size:12px; font-weight:600; color:var(--muted); background:none; border:1px solid var(--line); border-radius:8px; cursor:pointer; transition:.13s}
+  .reset-link:hover{color:var(--red); border-color:var(--red)}
+  .reset-link svg{width:13px; height:13px}
   .tog-group{border:1px solid var(--line); border-radius:12px; overflow:hidden; background:var(--surface-2); margin-bottom:18px}
   .tog{display:flex; align-items:center; gap:12px; padding:13px 15px; cursor:pointer; margin:0; user-select:none}
   .tog + .tog{border-top:1px solid var(--line)}
@@ -133,15 +155,15 @@
   .go:active{transform:translateY(1px)}
   .go:disabled{opacity:.45; cursor:not-allowed; box-shadow:none}
   .actions{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px}
-  .btn2{display:flex; align-items:center; justify-content:center; gap:8px; padding:12px 10px; font:inherit; font-weight:600; font-size:13px; color:#3a6fb0; background:#e9f0fb; border:1px solid transparent; border-radius:10px; cursor:pointer; transition:.13s; text-align:center}
-  .btn2:hover{background:#dae6f8; color:#2f5e9c}
+  /* secondary exports: quiet ghost buttons so Generate PDF stays dominant */
+  .btn2{display:flex; align-items:center; justify-content:center; gap:8px; padding:11px 10px; font:inherit; font-weight:600; font-size:12.5px; color:var(--ink-2); background:transparent; border:1px solid var(--line); border-radius:10px; cursor:pointer; transition:.13s; text-align:center}
+  .btn2:hover{background:var(--surface-2); color:var(--ink); border-color:#cfd6df}
+  :root[data-theme="dark"] .btn2:hover{border-color:#3a4554}
   .btn2:active{transform:translateY(1px)}
   .btn2 svg{width:15px; height:15px; flex:none}
-  :root[data-theme="dark"] .btn2{color:#9ec0f2; background:#1d2942}
-  :root[data-theme="dark"] .btn2:hover{background:#26334e; color:#cfe0fb}
+  :root[data-theme="dark"] .btn2{color:var(--ink-2); background:transparent}
   .btn2:disabled{opacity:.45; cursor:not-allowed}
-  .btn2:disabled:hover{background:#e9f0fb; color:#3a6fb0}
-  :root[data-theme="dark"] .btn2:disabled:hover{background:#1d2942; color:#9ec0f2}
+  .btn2:disabled:hover{background:transparent; color:var(--ink-2); border-color:var(--line)}
   .menu-wrap{position:relative}
   .menu-wrap .btn2{width:100%}
   .caret{margin-left:1px; opacity:.7}
@@ -168,18 +190,29 @@
   .progress > div{height:100%; width:0%; background:var(--accent); transition:width .1s linear}
 
   .stats{display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line-2); border:1px solid var(--line-2); border-radius:12px; overflow:hidden}
-  .stat{background:var(--surface); padding:14px 16px}
+  .stat{background:var(--surface); padding:10px 16px}
   .stat .k{font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--muted)}
   .stat .v{font-family:var(--mono); font-size:21px; font-weight:600; margin-top:3px; letter-spacing:-.01em}
 
-  .pv-wrap{display:flex; flex-direction:column; align-items:center; gap:14px; padding:24px 22px}
-  .pv-stage{min-height:150px; display:flex; align-items:center; justify-content:center; width:100%}
-  #pvCanvas{box-shadow:0 2px 12px rgba(16,20,27,.12); border-radius:2px}
+  .pv-wrap{display:flex; flex-direction:column; align-items:center; gap:13px; padding:22px 22px}
+  .pv-stage{min-height:170px; display:flex; align-items:center; justify-content:center; width:100%; padding:22px; border-radius:12px;
+    background:var(--surface-2);
+    background-image:radial-gradient(circle at 1px 1px, rgba(16,20,27,.05) 1px, transparent 0); background-size:14px 14px;
+    border:1px solid var(--line)}
+  :root[data-theme="dark"] .pv-stage{background-image:radial-gradient(circle at 1px 1px, rgba(255,255,255,.05) 1px, transparent 0)}
+  #pvCanvas{box-shadow:0 4px 18px rgba(16,20,27,.18); border-radius:2px; cursor:zoom-in; transition:opacity .12s ease}
   .pv-nav{display:flex; align-items:center; justify-content:center; gap:12px; width:100%}
   .pv-arrow{width:30px; height:30px; flex:none; display:grid; place-items:center; border:1px solid var(--line); background:var(--surface); color:var(--ink-2); border-radius:8px; cursor:pointer; font-size:16px; line-height:1; transition:.12s}
   .pv-arrow:hover:not(:disabled){border-color:var(--accent); color:var(--accent)}
   .pv-arrow:disabled{opacity:.4; cursor:not-allowed}
-  .pv-pos{font-family:var(--mono); font-size:12px; color:var(--ink-2); min-width:170px; text-align:center}
+  .pv-pos{font-family:var(--mono); font-size:12px; color:var(--ink-2); min-width:150px; text-align:center}
+  .pv-jump-wrap{display:flex; align-items:center; gap:6px; padding-left:10px; margin-left:4px; border-left:1px solid var(--line)}
+  .pv-jump-lab{font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--muted)}
+  .pv-jump{width:58px; padding:6px 8px; font-family:var(--mono); font-size:12px; text-align:center}
+  .zoom-overlay{position:fixed; inset:0; z-index:200; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; background:rgba(8,11,15,.82); backdrop-filter:blur(3px); cursor:zoom-out; padding:30px}
+  .zoom-overlay[hidden]{display:none}
+  .zoom-overlay #zoomCanvas{background:#fff; border-radius:3px; box-shadow:0 12px 50px rgba(0,0,0,.5); max-width:100%; max-height:82vh}
+  .zoom-hint{font-size:12.5px; color:rgba(255,255,255,.7); font-weight:500}
   .asset-hints{font-family:var(--mono); font-size:11.5px; color:var(--red); min-height:14px; text-align:center; width:100%}
 
   .sheet-box{width:100%; max-width:210px}
@@ -192,7 +225,7 @@
   .cell.on{background:var(--accent)}
   .sheet-more{font-family:var(--mono); font-size:11px; color:var(--muted); text-align:center; margin-top:8px}
 
-  .foot-note{font-size:12px; color:var(--muted); line-height:1.55; padding:0 22px 22px}
+  .foot-note{font-size:11.5px; color:var(--muted); line-height:1.5; padding:0 22px 18px}
   .foot-note strong{color:var(--ink-2)}
   .assetid{margin:0 22px 20px; padding:13px 15px; background:var(--surface-2); border:1px solid var(--line); border-radius:12px}
   .aid-k{font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--muted)}
@@ -213,10 +246,10 @@
     </div>
     <div>
       <h1>Isolation Label Generator</h1>
-      <div class="meta">Modernized label layout &middot; filled header, QR-forward &middot; print-ready PDF</div>
+      <div class="meta">Print-ready lockout/tagout labels &middot; QR asset tags &middot; batch PDF &amp; manifest export</div>
     </div>
     <div class="right">
-      <span class="pill">Build <span id="buildDate"></span></span>
+      <span class="pill">Build&nbsp;<span id="buildDate"></span></span>
       <span class="pill"><b id="verBadge"></b></span>
       <button class="icon-btn" id="themeToggle" title="Toggle light / dark" aria-label="Toggle theme">
         <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg>
@@ -229,7 +262,7 @@
     <!-- Controls -->
     <div>
       <div class="card">
-        <div class="card-head"><h2>Label setup</h2></div>
+        <div class="card-head"><h2>Label setup</h2><button type="button" class="reset-link" id="resetDefaults" title="Reset all settings to defaults"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path><path d="M3 3v5h5"></path></svg>Reset</button></div>
         <div class="pad">
           <div class="blk">
             <label class="fld" for="format">Label format / paper</label>
@@ -265,6 +298,7 @@
             <div class="hint">Placement is top-left + gaps; right/bottom margins are whatever's left on the sheet. Test-print before a real run.</div>
           </div>
 
+          <div class="sec">Label design</div>
           <!-- Energy type + Company -->
           <div class="blk" style="display:flex; gap:14px; align-items:flex-start">
             <div style="flex:0.8 1 0"><label class="fld" for="energy">Energy type</label><select id="energy"></select></div>
@@ -276,40 +310,43 @@
             <button class="style-toggle" id="styleToggle" type="button" aria-expanded="false">
               <span class="st-lab">Style</span>
               <span class="st-val" id="styleSummary">Modern &middot; New symbols</span>
-              <svg class="st-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+              <span class="st-edit">
+                <span class="lbl-open">Edit</span><span class="lbl-close">Close</span>
+                <svg class="st-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+              </span>
             </button>
             <div class="style-panel" id="stylePanel" hidden>
               <div style="display:flex; gap:14px; align-items:flex-start">
                 <div style="flex:1.5 1 0">
                   <label class="fld">Label style</label>
-                  <div class="seg" role="tablist" style="margin-bottom:0">
+                  <div class="seg" role="tablist" aria-label="Label style" style="margin-bottom:0">
                     <button id="styleOG" role="tab" aria-selected="false">OG</button>
-                    <button id="styleClassic" role="tab" aria-selected="false">Classic</button>
                     <button id="styleModern" role="tab" aria-selected="true">Modern</button>
+                    <button id="styleClassic" role="tab" aria-selected="false">Classic</button>
                   </div>
                 </div>
                 <div style="flex:1 1 0">
                   <label class="fld">Symbol style</label>
-                  <div class="seg" role="tablist" style="margin-bottom:0">
+                  <div class="seg" role="tablist" aria-label="Symbol style" style="margin-bottom:0">
                     <button id="symNew" role="tab" aria-selected="true">New</button>
                     <button id="symOld" role="tab" aria-selected="false">Old</button>
                   </div>
                 </div>
                 <div style="flex:0.55 1 0">
                   <label class="fld" for="pad">Padding</label>
-                  <input id="pad" class="mono spin" type="number" value="4" min="0" max="8">
+                  <input id="pad" class="mono" type="number" value="4" min="0" max="8">
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="divider"></div>
+          <div class="sec">Numbering</div>
 
           <div class="blk">
             <div style="display:flex; gap:12px; align-items:flex-start">
               <div style="flex:0 0 32%">
                 <label class="fld">Mode</label>
-                <div class="seg" role="tablist" style="margin-bottom:0">
+                <div class="seg" role="tablist" aria-label="Numbering mode" style="margin-bottom:0">
                   <button id="tabRange" role="tab" aria-selected="true">Range</button>
                   <button id="tabList" role="tab" aria-selected="false">Tags</button>
                 </div>
@@ -317,8 +354,8 @@
               <div id="rangeFields" style="flex:1 1 0">
                 <label class="fld">Range</label>
                 <div class="row" style="gap:10px">
-                  <div class="ingrp"><span class="pfx">From</span><input id="start" class="mono spin" type="number" value="1" aria-label="From (start tag)"></div>
-                  <div class="ingrp"><span class="pfx">To</span><input id="end" class="mono spin" type="number" value="1000" aria-label="To (end tag)"></div>
+                  <div class="ingrp"><span class="pfx">From</span><input id="start" class="mono" type="number" value="1" aria-label="From (start tag)"></div>
+                  <div class="ingrp"><span class="pfx">To</span><input id="end" class="mono" type="number" value="1000" aria-label="To (end tag)"></div>
                 </div>
               </div>
               <div id="listFields" style="flex:1 1 0; display:none">
@@ -329,7 +366,7 @@
             <input type="hidden" id="prefix" value="E-">
           </div>
 
-          <div class="divider"></div>
+          <div class="sec">Identity</div>
 
           <div class="blk">
             <div class="fitrow">
@@ -338,13 +375,14 @@
               <div style="flex:1 1 0">
                 <div style="display:flex; gap:8px">
                   <div style="flex:1 1 0"><label class="fld" for="site">Site</label><input id="site" class="mono" placeholder="YVR6" value="YVR6"></div>
-                  <div style="flex:1 1 0"><label class="fld" for="qrYear">Year</label><input id="qrYear" class="mono spin" type="number" value="2026"></div>
+                  <div style="flex:1 1 0"><label class="fld" for="qrYear">Year</label><input id="qrYear" class="mono" type="number" value="2026"></div>
                 </div>
               </div>
             </div>
           </div>
           <div class="hint" id="assetPreview" style="margin:-10px 0 18px"></div>
 
+          <div class="sec">Show on label</div>
           <div class="tog-row">
             <label class="tog-h">
               <span class="tip">Small line above the tag number</span>
@@ -363,6 +401,7 @@
             </label>
           </div>
 
+          <div class="sec">Output</div>
           <div class="readout" id="readout"></div>
           <div class="progress" id="progress"><div id="progressBar"></div></div>
           <button class="go" id="go">Generate PDF</button>
@@ -424,15 +463,21 @@
               </div>
             </div>
           </div>
-    <div>
-      <div class="card">
-        <div class="card-head"><h2>Live preview</h2><span class="tag-n" id="previewOf"></span></div>
+        </div><!-- /.pad -->
+      </div><!-- /.card controls -->
+    </div><!-- /controls column -->
+
+    <!-- Preview column -->
+    <div class="pv-col">
+      <div class="card pv-card">
+        <div class="card-head"><h2>Live preview</h2></div>
         <div class="pv-wrap">
           <div class="pv-stage"><canvas id="pvCanvas"></canvas></div>
           <div class="pv-nav" id="pvNav" style="display:none">
             <button class="pv-arrow" id="pvPrev" aria-label="Previous label">&lsaquo;</button>
             <span class="pv-pos" id="pvPos">Label 1 of 1</span>
             <button class="pv-arrow" id="pvNext" aria-label="Next label">&rsaquo;</button>
+            <span class="pv-jump-wrap"><span class="pv-jump-lab">Go to</span><input class="pv-jump mono" id="pvJump" type="number" min="1" placeholder="#" aria-label="Jump to label number"></span>
           </div>
           <div class="asset-hints" id="assetHints"></div>
           <div class="sheet-box">
@@ -458,11 +503,15 @@
             <div class="stat"><div class="k">Sheets</div><div class="v" id="statSheets">0</div></div>
             <div class="stat"><div class="k">Last tag</div><div class="v" id="statLast" style="font-size:17px">&mdash;</div></div>
           </div>
-        </div>
-        </div>
-      </div>
-    </div>
-  </div>
+        </div><!-- /.pad -->
+      </div><!-- /.card stats -->
+    </div><!-- /.pv-col -->
+  </div><!-- /.grid -->
+</div><!-- /.shell -->
+
+<div class="zoom-overlay" id="zoomOverlay" hidden>
+  <canvas id="zoomCanvas"></canvas>
+  <div class="zoom-hint">Click anywhere to close &middot; &larr; &rarr; to step through labels</div>
 </div>
 
 <script>
@@ -482,8 +531,8 @@
      LAYOUTS       -> page size, grid, label size, margins, gaps (Avery presets + Custom)
    ASSETS load by relative path; serve /assets beside this file (GitHub Pages).
    ========================================================================= */
-const VERSION = "4.0.0";
-const BUILD_DATE = "2026-06-18";
+const VERSION = "4.5.0";
+const BUILD_DATE = "2026-06-20";
 const PT = 72;
 const LS = 'ilg.settings';
 
@@ -514,7 +563,7 @@ const COMPANIES = {
 
 /* --- LAYOUTS: sizes in INCHES. content 'iso' = full tag, 'compact' = number-first --- */
 const LAYOUTS = {
-  ol996wj:   { name:'Isolation — 2" × 3" (10-up, OnlineLabels OL996WJ)', avery:'OL996WJ', page:'letter', cols:2, rows:5,  labelW:3,     labelH:2,     mL:1.1875,  mT:0.25, gX:0.125, gY:0.125, content:'iso' },
+  ol996wj:   { name:'Isolation — 2" × 3" (10-up, OnlineLabels OL996WJ)', avery:'OL996WJ', page:'letter', cols:2, rows:5,  labelW:3,     labelH:2,     mL:1.1875,  mT:0.25, gX:0.125, gY:0.125, radiusIn:0.125, content:'iso' },
   iso_5163:  { name:'Isolation — 2" × 4" (10-up, Avery 5163/8163)',     avery:'5163', page:'letter', cols:2, rows:5,  labelW:4,     labelH:2,     mL:0.15625, mT:0.5, gX:0.1875, gY:0, content:'iso' },
   warn_5164: { name:'Large warning — 3⅓" × 4" (6-up, Avery 5164/8164)', avery:'5164', page:'letter', cols:2, rows:3,  labelW:4,     labelH:3.333, mL:0.15625, mT:0.5, gX:0.1875, gY:0, content:'iso' },
   id_5160:   { name:'Small asset ID — 1" × 2⅝" (30-up, Avery 5160/8160)', avery:'5160', page:'letter', cols:3, rows:10, labelW:2.625, labelH:1,   mL:0.1875,  mT:0.5, gX:0.125,  gY:0, content:'compact' },
@@ -860,31 +909,32 @@ function drawIsoOG(pen,x,y,w,h,c){
   if(c.assetId){
     const aFs=fitFont(pen, c.assetId, bodyH*0.84, h*0.048, h*0.028);
     const tw=pen.measure(c.assetId, aFs, true);
-    pen.textRot(c.assetId, ix+iw - w*0.05, iy+ih*0.5+tw/2, aFs, c.col, true);
+    pen.textRot(c.assetId, ix+iw - w*0.022, iy+ih*0.5+tw/2, aFs, c.col, true);
   }
 
-  // number vertical center — sits midway between the heading and the logo
-  const numCy = bodyTop + bodyH*(c.siteCode ? 0.26 : 0.22);
-  const qrCy = bodyTop + bodyH*(c.siteCode ? 0.16 : 0.22);
-
-  // QR (optional) — centered on the site-code + number block so it stays put when site code toggles
-  let numRight=colR;
+  // QR (optional) — its bottom becomes the baseline the tag number aligns to
+  const qrCy = bodyTop + bodyH*(c.siteCode ? 0.205 : 0.22);
+  let numRight=colR, qrBottom=null;
   if(c.qr){
     const qrS=Math.min(bodyH*0.34, w*0.18);
     const qrX=colR-qrS, qrY=qrCy - qrS/2;
     drawQR(pen, c.qr, qrX, qrY, qrS);
-    numRight=qrX-w*0.02;
+    numRight=qrX-w*0.02; qrBottom=qrY+qrS;
   }
   const numCx=(colL+numRight)/2, numW=Math.max(w*0.2,numRight-colL);
 
-  // site code (optional) — small line lifted clear above the tag number
+  // tag number — large; when a QR is shown, line its bottom up with the QR's bottom
+  const numFs=fitFont(pen,c.text,numW*0.96,h*0.185,h*0.07);
+  const numCy = c.qr
+    ? (c.siteCode ? (qrBottom - numFs*0.34) : qrCy)
+    : (bodyTop + bodyH*(c.siteCode ? 0.26 : 0.22));
+
+  // site code (optional) — small line sitting just above the tag number
   if(c.siteCode){
     const sFs=fitFont(pen,c.siteCode,numW*0.9,h*0.058,h*0.032);
-    pen.text(c.siteCode, numCx, bodyTop-bodyH*0.02+sFs*0.8, sFs, c.col,'center',true);
+    pen.text(c.siteCode, numCx, numCy - bodyH*(c.qr ? 0.115 : 0.155), sFs, c.col,'center',true);
   }
 
-  // tag number — large, black
-  const numFs=fitFont(pen,c.text,numW*0.96,h*0.185,h*0.07);
   pen.text(c.text, numCx, numCy+numFs*0.34, numFs, c.num,'center',true);
 
   // company logo — middle of the right column
@@ -901,10 +951,8 @@ function drawIsoOG(pen,x,y,w,h,c){
   const warnFs=fitFont(pen,'DO NOT REMOVE THIS TAG',iw*0.9,h*0.072,h*0.040);
   pen.text('DO NOT REMOVE THIS TAG', cx, iy+ih-ih*0.105, warnFs, c.col,'center',true);
 
-  // double theme-color frame
+  // theme-color frame
   pen.strokeRoundRect(ix,iy,iw,ih,r,c.col,Math.max(1.2,h*0.024));
-  const gp=h*0.038;
-  pen.strokeRoundRect(ix+gp,iy+gp,iw-2*gp,ih-2*gp,Math.max(0,r-gp),c.col,Math.max(0.6,h*0.006));
 }
 function drawCompact(pen,x,y,w,h,c){
   const ins=h*0.06, r=(c.radius!=null?c.radius:h*0.12);
@@ -964,7 +1012,7 @@ function buildCtx(L){
     col:th.color, bg:(th.bg||[255,255,255]), num:(th.num||th.color),
     sym:symCache[symKey(curEnergy)]||null, symAlias:'sym-'+curEnergy+'-'+curSymbolStyle, symScale:(ENERGY_TYPES[curEnergy].symScale||1),
     logo:logoCache[curCompany]||null, logoFmt:co.fmt, logoAlias:'logo-'+curCompany,
-    radius:(L.custom?L.radiusPt:null),
+    radius:(L.custom?L.radiusPt:(L.radiusIn!=null?L.radiusIn*PT:null)),
     siteCode:($('showSite').checked && site && L.content!=='compact')?site:null,
     style:curStyle,
     showQR:($('showQR').checked && L.content!=='compact'), showAsset:$('showAsset').checked, qr:null, assetId:null };
@@ -975,7 +1023,7 @@ function drawSheetDiagram(count){
   const cv=$('sheetCanvas'); if(!cv) return;
   const L=currentLayout(), g=layoutGeom(L);
   const col=theme(ENERGY_TYPES[curEnergy]).color;
-  const boxW=192, S=boxW/g.page.w, dpr=window.devicePixelRatio||1;
+  const boxW=190, S=boxW/g.page.w, dpr=window.devicePixelRatio||1;
   cv.width=Math.round(g.page.w*S*dpr); cv.height=Math.round(g.page.h*S*dpr);
   cv.style.width=(g.page.w*S)+'px'; cv.style.height=(g.page.h*S)+'px';
   const ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0);
@@ -1004,12 +1052,12 @@ function paintSheet(count){
 }
 function updatePvNav(){
   const n=previewNums().length;
-  if(n<=1){ $('pvNav').style.display='none'; $('previewOf').textContent = n===1?'1 tag':''; return; }
+  if(n<=1){ $('pvNav').style.display='none'; return; }
   $('pvNav').style.display=''; clampPvIndex();
-  $('pvPos').textContent=`Label ${pvIndex+1} of ${n.toLocaleString()} \u00b7 ${fmt(previewNums()[pvIndex])}`;
-  $('previewOf').textContent=`label ${pvIndex+1} of ${n.toLocaleString()}`;
+  $('pvPos').textContent=`Label ${pvIndex+1} of ${n.toLocaleString()}`;
   $('pvPrev').disabled = pvIndex<=0;
   $('pvNext').disabled = pvIndex>=n-1;
+  const jp=$('pvJump'); if(jp){ jp.max=n; if(document.activeElement!==jp) jp.value=pvIndex+1; }
 }
 function stepPreview(d){
   const n=previewNums().length; if(!n) return;
@@ -1018,21 +1066,32 @@ function stepPreview(d){
 }
 
 /* ---------- canvas preview (same routine as PDF) ---------- */
-function drawPreview(){
+function renderLabelTo(cv, maxW, maxH){
   const L=currentLayout();
   const pn=currentPreviewNum();
   const c=buildCtx(L); c.text=fmt(pn);
   if(c.showAsset) c.assetId=assetIdFor(pn);
   if(c.showQR && L.content!=='compact') c.qr=makeQR(assetIdFor(pn));
   const LW=L.labelW*PT, LH=L.labelH*PT;
-  const S=Math.min(330/LW, 210/LH);
-  const cv=$('pvCanvas'); const dpr=window.devicePixelRatio||1;
+  const S=Math.min(maxW/LW, maxH/LH);
+  const dpr=window.devicePixelRatio||1;
   cv.width=Math.round(LW*S*dpr); cv.height=Math.round(LH*S*dpr);
   cv.style.width=(LW*S)+'px'; cv.style.height=(LH*S)+'px';
   const ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,LW*S,LH*S);
   ctx.fillStyle='#fff'; ctx.fillRect(0,0,LW*S,LH*S);
   const drawer = (L.content==='compact') ? drawCompact : (c.style==='og' ? drawIsoOG : c.style==='classic' ? drawIso : drawIsoModern);
   drawer(canvasPen(ctx,S), 0, 0, LW, LH, c);
+}
+function drawPreview(){
+  const cv=$('pvCanvas');
+  const stageW=((cv.closest('.pv-stage')||{}).clientWidth||384)-44;
+  renderLabelTo(cv, Math.max(300,stageW), 318);
+  // subtle fade so updates register visually
+  cv.style.opacity='0.45'; requestAnimationFrame(()=>{ cv.style.opacity='1'; });
+}
+function openZoom(){
+  const ov=$('zoomOverlay'); if(!ov) return; ov.hidden=false;
+  renderLabelTo($('zoomCanvas'), Math.min(window.innerWidth*0.92, 1180), window.innerHeight*0.82);
 }
 
 /* ---------- refresh ---------- */
@@ -1044,16 +1103,17 @@ function refresh(){
   if(err){
     ro.innerHTML=`<span class="warn">${err}</span>`; go.disabled=true;
     $('statCount').textContent='0'; $('statSheets').textContent='0'; $('statLast').textContent='\u2014';
-    $('previewOf').textContent=''; $('pvNav').style.display='none'; paintSheet(0); $('btnManifest').disabled=true; $('btnQA').disabled=true; saveSettings(); return;
+    $('pvNav').style.display='none'; paintSheet(0); $('btnManifest').disabled=true; $('btnQA').disabled=true; saveSettings(); return;
   }
   go.disabled=false; $('btnManifest').disabled=false; $('btnQA').disabled=false;
   const L=currentLayout(), per=Math.max(1,L.cols*L.rows), sheets=Math.ceil(nums.length/per);
   const name = LAYOUTS[curFormat].custom ? `custom ${L.labelW}"×${L.labelH}" (${per}/sheet)` : LAYOUTS[curFormat].avery;
+  const rem = nums.length % per;
+  const partial = rem>0 && nums.length>per ? ` <span style="opacity:.7">(last sheet ${rem}/${per})</span>` : '';
   $('statCount').textContent=nums.length.toLocaleString();
   $('statSheets').textContent=sheets.toLocaleString();
   $('statLast').textContent=fmt(nums[nums.length-1]);
-  $('previewOf').textContent=nums.length>1?`label ${pvIndex+1} of ${nums.length.toLocaleString()}`:'1 tag';
-  ro.innerHTML=`<span class="good">Ready</span>&nbsp;&middot;&nbsp;${nums.length.toLocaleString()} label${nums.length!==1?'s':''} &middot; ${sheets.toLocaleString()} sheet${sheets!==1?'s':''} &middot; ${name}`;
+  ro.innerHTML=`<span class="good">Ready</span>&nbsp;&middot;&nbsp;${nums.length.toLocaleString()} label${nums.length!==1?'s':''} &middot; ${sheets.toLocaleString()} sheet${sheets!==1?'s':''}${partial} &middot; ${name}`;
   updatePvNav(); paintSheet(nums.length); saveSettings();
 }
 
@@ -1402,6 +1462,16 @@ $('energy').onchange  = e => { curEnergy=e.target.value; pvIndex=0; applyEnergy(
 $('company').onchange = e => { curCompany=e.target.value; applyCompany(); };
 $('pvPrev').onclick = ()=>stepPreview(-1);
 $('pvNext').onclick = ()=>stepPreview(1);
+$('pvCanvas').addEventListener('click', openZoom);
+(function(){ const ov=$('zoomOverlay'); if(ov) ov.addEventListener('click', ()=>{ ov.hidden=true; }); })();
+$('pvJump').addEventListener('change', ()=>{ const n=previewNums().length; let v=parseInt($('pvJump').value,10); if(isNaN(v))return; v=Math.max(1,Math.min(n,v)); pvIndex=v-1; drawPreview(); updateAssetUI(); updatePvNav(); paintSheet(n); });
+$('pvJump').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); $('pvJump').blur(); } });
+document.addEventListener('keydown', e=>{
+  const t=(e.target&&e.target.tagName)||''; if(/^(INPUT|TEXTAREA|SELECT)$/.test(t)) return;
+  if(!$('zoomOverlay').hidden && e.key==='Escape'){ $('zoomOverlay').hidden=true; return; }
+  if(e.key==='ArrowLeft'){ stepPreview(-1); if(!$('zoomOverlay').hidden) openZoom(); }
+  else if(e.key==='ArrowRight'){ stepPreview(1); if(!$('zoomOverlay').hidden) openZoom(); }
+});
 $('tabRange').onclick = ()=>setMode('range');
 $('tabList').onclick  = ()=>setMode('list');
 function setStyle(s){ curStyle=s; $('styleOG').setAttribute('aria-selected', s==='og'); $('styleModern').setAttribute('aria-selected', s==='modern'); $('styleClassic').setAttribute('aria-selected', s==='classic'); updateStyleSummary(); refresh(); }
@@ -1436,6 +1506,12 @@ $('btnCalib').onclick = ()=> exportCalibration();
 $('btnExportAll').onclick = (e)=>{ e.stopPropagation(); const m=$('exportAllMenu'); const open=m.hidden; closeActionMenus(); m.hidden=!open; };
 $('exportAllMenu').addEventListener('click', (e)=> e.stopPropagation());
 $('xaRun').onclick = async ()=>{ $('exportAllMenu').hidden=true; await exportSelected(); };
+
+$('resetDefaults').onclick = ()=>{
+  if(!confirm('Reset all settings to defaults? This clears your saved label setup on this device.')) return;
+  try{ localStorage.removeItem(LS); }catch(e){}
+  location.reload();
+};
 
 $('verBadge').textContent = 'v'+VERSION;
 $('buildDate').textContent = BUILD_DATE;
