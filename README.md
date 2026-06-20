@@ -48,7 +48,6 @@ The file is static, so any static host works. Pick one:
 
 Everything you'd change lives in the config block near the top of the `<script>` in the HTML.
 
-- **Version:** `VERSION` and `BUILD_DATE` constants — single source of truth (see [Versioning](#versioning)).
 - **Geometry / calibration (most important):** the `LAYOUTS` object defines every format **in inches** — `labelW`/`labelH`, margins (`mL`/`mT`), gaps (`gX`/`gY`), `cols`/`rows`, and an optional `radiusIn` (physical die-cut corner radius). If tags print misaligned, nudge these and re-test. **Always test-print on the real stock before rollout** — or use the built-in **Calibration sheet** export.
 - **Colour themes:** the `THEMES` object — `color` drives the perimeter/header/footer (and number unless `num` is set), `bg` is the fill. Each energy type points at a theme.
 - **Energy types:** the `ENERGY_TYPES` object — label, `prefix`, `pad`, default `company`, `theme`, and **two** symbol paths: `symbol` (Old) and `symbolNew` (New). Optional `symScale` fine-tunes one symbol's size. Add a type by adding an entry plus its SVGs.
