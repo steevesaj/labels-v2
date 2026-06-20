@@ -1,18 +1,25 @@
 # Isolation Label Generator
 
-Browser-based generator for sequential electrical isolation-point label sheets — Avery 5163, 10-up, no install or login.
+Browser-based generator for sequential electrical/mechanical isolation-point label sheets — print-ready PDF, QR asset tags, batch manifest + QA exports. No install, no login, no backend.
 
-A single self-contained HTML file. Enter a number range or specific tags, and it renders a print-ready PDF **entirely in the browser** — no server, no backend, no software to install. Built so field techs can self-serve from a SharePoint link.
+A single self-contained HTML file. Pick an energy type and label style, enter a number range or specific tags, and it renders a positioned, print-ready PDF **entirely in the browser**. Built so field techs can self-serve from a SharePoint link.
+
+> **Current version: v4.5.0** (build 2026-06-20). See the [changelog](#changelog).
 
 ---
 
 ## For techs — how to use it
 
 1. Open the tool (link on the SharePoint **Tools** page).
-2. Choose **Number range** (e.g. `5000` to `5200`) or **Specific tags** for reprints (e.g. `5042, 5108, 5511`).
-3. Check the live preview and the label/sheet count.
-4. Click **Generate PDF** — it downloads a positioned sheet.
-5. Print on the correct label stock (Avery 5163, 10 per sheet). Don't scale to fit — print at 100% / actual size.
+2. Pick the **Energy type** (Electrical, Gas, Pneumatic, Gravity, Water, Hydraulic) and **Company**. These set the header, hazard symbol, colour theme, prefix, and phone automatically.
+3. Choose **Mode → Range** (e.g. `5000`–`5200`) or **Tags** for reprints (e.g. `5042, 5108, 5511`).
+4. *(Optional)* Open **Style** to switch the label layout (**Modern**, **OG**, **Classic**), the symbol set (**New** / **Old**), and the number **padding**.
+5. *(Optional)* Toggle the **Site code**, **QR code**, and **Asset ID** options for scannable, traceable tags.
+6. Check the **live preview** (click it to zoom; use the arrows to step through labels) and the label/sheet count.
+7. Click **Generate PDF** — it downloads a positioned sheet. The secondary buttons export a **Manifest** (XLSX/CSV), a **QA Proof Sheet**, or **Export all** at once.
+8. Print on the correct label stock. **Don't scale to fit — print at 100% / actual size.**
+
+The tool remembers your last setup on that device. **Reset** (top-right of *Label setup*) clears it back to defaults.
 
 ---
 
@@ -27,41 +34,44 @@ The file is static, so any static host works. Pick one:
 | **SharePoint link** | Host on one of the above, then add the URL as a link or Embed web part on the Tools page. Techs are already in M365, so no extra login. |
 
 **Deploy steps (GitHub Pages):**
-1. Rename the file to `index.html` and put it in a repo (suggested repo name: `label-generator`).
+1. Rename the file to `index.html` and put it in a repo (suggested repo name: `label-generator`). Keep the `/assets` folder beside it.
 2. Repo **Settings → Pages** → deploy from your branch. You get a URL like `youruser.github.io/label-generator/`.
 3. Add that URL to the SharePoint Tools page.
 
 > Note: don't upload the HTML *into* SharePoint and expect it to run — modern SharePoint blocks scripts in uploaded files. Host it, then link to it.
 
+**Internet access:** the page loads three libraries from cdnjs at runtime — **jsPDF** (PDF), **qrcode-generator** (QR), and **ExcelJS** (XLSX manifest) — plus Google Fonts. Generation degrades gracefully if one fails (e.g. QR or XLSX warns and is skipped) but for a fully offline deployment, self-host those scripts beside the HTML and repoint the `<script src>` tags.
+
 ---
 
 ## For the admin — updating
 
-Everything you'd change lives at the top of the `<script>` block in the HTML.
+Everything you'd change lives in the config block near the top of the `<script>` in the HTML.
 
-- **Geometry / calibration (most important):** the `MARGIN_*`, `GUTTER`, and `LABEL_*` constants are points (72 pt = 1 inch), set to Avery 5163. If tags print misaligned, nudge these and re-test. **Always test-print on the real stock before rollout.**
-- **Logos / symbols:** stored in `/assets/logos` and `/assets/symbols`, referenced from the `ENERGY_TYPES` (symbols), `COMPANIES` (logos), and `LAYOUTS` (formats) config objects at the top of the HTML. The tool expects one symbol per energy type: `electrical.svg`, `gas.svg`, `pneumatic.svg`, `gravity.svg`, `water.svg`, `hydraulic.svg`, and one logo per company: `pgs-logo.jpg`, `magna-logo.png`. To change one, replace the file (keep the filename, or edit the config path). To add a type, company, or format, add a config entry — the dropdowns, preview, and PDF all read from the config. A missing file shows a placeholder + hint instead of breaking. Symbol SVGs are rasterized at high resolution for the PDF.
-- **Fixed text / phone:** phone and prefix are editable in the UI; the header and footer text are in the `drawLabel()` function.
-- **New label types later:** the engine is structured so additional companies/label types become config, not a rewrite.
+- **Version:** `VERSION` and `BUILD_DATE` constants — single source of truth (see [Versioning](#versioning)).
+- **Geometry / calibration (most important):** the `LAYOUTS` object defines every format **in inches** — `labelW`/`labelH`, margins (`mL`/`mT`), gaps (`gX`/`gY`), `cols`/`rows`, and an optional `radiusIn` (physical die-cut corner radius). If tags print misaligned, nudge these and re-test. **Always test-print on the real stock before rollout** — or use the built-in **Calibration sheet** export.
+- **Colour themes:** the `THEMES` object — `color` drives the perimeter/header/footer (and number unless `num` is set), `bg` is the fill. Each energy type points at a theme.
+- **Energy types:** the `ENERGY_TYPES` object — label, `prefix`, `pad`, default `company`, `theme`, and **two** symbol paths: `symbol` (Old) and `symbolNew` (New). Optional `symScale` fine-tunes one symbol's size. Add a type by adding an entry plus its SVGs.
+- **Companies:** the `COMPANIES` object — `logo`, image `fmt` (`JPEG`/`PNG`), and default `phone`.
+- **Logos / symbols:** stored in `/assets/logos` and `/assets/symbols`. Expected symbols are one **Old** + one **New** per energy type (e.g. `electrical.svg` / `electrical_new.svg`), and one logo per company (`pgs-logo.jpg`, `magna-logo.png`). To change one, replace the file (keep the filename, or edit the config path). A missing file shows a placeholder + hint instead of breaking. Non-electrical symbols are auto-tinted to the energy theme colour; SVGs are trimmed of transparent padding and rasterized at high resolution for crisp print.
+- **Label styles:** three drawers render the tag art — `drawIsoModern` (default), `drawIsoOG`, and `drawIso` (Classic) — plus `drawCompact` for the small ID format. Fixed wording like "DO NOT REMOVE THIS TAG" lives in these functions.
+- **New label types later:** the engine is config-driven — additional companies, energy types, or formats become config entries (the dropdowns, preview, PDF, manifest, and QA sheets all read from them), not a rewrite.
 
 ---
 
-## Versioning
+## Changelog
 
-Semantic Versioning — `MAJOR.MINOR.PATCH`:
+#### v4.5.0 — 2026-06-20
+- **Two-column workspace.** Controls on the left, a sticky **Live preview** + **Sheet layout** diagram + run **stats** on the right, so the result stays in view while you work. Columns are height-balanced.
+- **Three label styles** — **Modern** (default), **OG**, and **Classic** — switchable in a collapsible **Style** panel along with the symbol set and padding. The panel summarises the current pick (e.g. *Modern · New symbols · Pad 4*).
+- **New vs Old symbol sets.** Every energy type ships two symbol artworks; **New** is the default. Symbols are trimmed to their real content and theme-tinted (electrical keeps its yellow/black ISO 7010 look) so they centre consistently across styles.
+- **OnlineLabels OL996WJ (3" × 2", 10-up) is the default format,** verified against the official template to the twip — size, sheet, margins, pitches, spacing, and the **3.18 mm (0.125") die-cut corner radius** are all wired to spec.
+- **Batch export suite:** **Manifest** (XLSX with frozen header, auto-filter, and a *Print Status* dropdown / or CSV), **QA Proof Sheet** (fillable or non-fillable PDF), a **Calibration sheet**, and **Export all** to run the selected outputs in sequence.
+- **Asset ID on the label** prints vertically along the right edge; its strip is reserved even when hidden, so the number and QR keep the same size and position whether or not it's shown.
+- **Accessibility + polish:** keyboard focus rings on every control, ARIA labels on the segmented groups, an SVG favicon + page metadata, click-to-zoom preview, and a **Reset to defaults** button in the *Label setup* header.
+- Redundant on-screen label-number readouts removed (the number is legible on the preview itself).
 
-- **PATCH** (`1.0.x`) — geometry tweaks, logo swap, copy fixes.
-- **MINOR** (`1.x.0`) — new label type/company, new field or option.
-- **MAJOR** (`x.0.0`) — structural redesign or any breaking change.
-
-The version is the single source of truth in one constant (`VERSION`) and surfaces in three places:
-1. The **header badge** in the UI (`v1.6.0`).
-2. The **PDF metadata** of every generated sheet (creator + keywords include the version, the generation date, and the tag range) — so any printed sheet is traceable to the exact build and parameters that produced it.
-3. The **changelog** below.
-
-**To release a new version:** update `VERSION` and `BUILD_DATE` at the top of the file, add a changelog entry, and (if using git) tag the commit `vX.Y.Z`.
-
-### Changelog
+> **Consolidates the v2.x–v4.x line** (after the v1.6.0 README): the asset-ID edge strip, per-style symbol handling, the OL996WJ format and spec-accurate corner radius, the manifest/QA/calibration exports, the two-column redesign, and the accessibility pass all landed across these releases.
 
 #### v1.6.0 — 2026-06-17
 - **New asset ID format** — `{site}-{prefix}{number}-{YY}`, e.g. `YVR6-E-0007-26` (site code · energy type · asset number · last two digits of the year). This is the string the QR encodes. Previously `{year}-{site}-{prefix}{number}`.
@@ -105,4 +115,6 @@ The version is the single source of truth in one constant (`VERSION`) and surfac
 
 ## Calibration warning
 
-Print geometry must match the physical label stock exactly. Before any rollout: generate one sheet, print on the actual labels at **100% scale**, and confirm registration. Re-tune the geometry constants if needed, then lock it.
+Print geometry must match the physical label stock exactly. Before any rollout: generate one sheet (or use the **Calibration sheet** export), print on the actual labels at **100% scale**, and confirm registration. Re-tune the layout's geometry if needed, then lock it.
+
+> The default **OL996WJ** format has been cross-checked against the official OnlineLabels template (page size, margins, label cells, pitches, and the 3.18 mm die-cut corner) and matches to within sub-0.01 mm rounding. Still do a test print before a large run.
