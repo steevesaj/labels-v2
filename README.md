@@ -8,6 +8,10 @@ A single self-contained HTML file. Pick an energy type and label style, enter a 
 
 > **Current version: v4.5.0** (build 2026-06-20). See the [changelog](#changelog).
 
+## ▶ [Open the Isolation Label Generator](https://steevesaj.github.io/labels-v2/)
+
+`https://steevesaj.github.io/labels-v2/` — no install, no login. Bookmark it, or use the link on the SharePoint **Tools** page.
+
 ---
 
 ## Contents
@@ -23,7 +27,7 @@ A single self-contained HTML file. Pick an energy type and label style, enter a 
 
 ## For techs — how to use it
 
-1. Open the tool (link on the SharePoint **Tools** page).
+1. Open the tool: **[steevesaj.github.io/labels-v2](https://steevesaj.github.io/labels-v2/)** (also linked on the SharePoint **Tools** page).
 2. Pick the **Energy type** (Electrical, Gas, Pneumatic, Gravity, Water, Hydraulic) — this sets the header, hazard symbol, colour theme, and number prefix — and the **Company**, which sets the logo and default phone.
 3. Choose **Mode → Range** (e.g. `5000`–`5200`) or **Tags** for reprints (e.g. `5042, 5108, 5511`).
 4. *(Optional)* Open **Style** to switch the label layout (**Modern**, **OG**, **Classic**), the symbol set (**New** / **Old**), and the number **padding**.
@@ -38,17 +42,17 @@ The tool remembers your last setup on that device. **Reset** (top-right of *Labe
 
 ## For the admin — hosting
 
-The file is static, so any static host works. Pick one:
+The file is static, so any static host works. This build is deployed on **GitHub Pages** at `https://steevesaj.github.io/labels-v2/`. Other options:
 
 | Host | Notes |
 |---|---|
-| **GitHub Pages** | Free, fastest. Public URL — anyone with the link sees the page and embedded logo. Fine for non-sensitive use. |
+| **GitHub Pages** | Free, fastest — current deployment. Public URL — anyone with the link sees the page and embedded logo. Fine for non-sensitive use. |
 | **Azure Static Web Apps** | Free tier; can stay anonymous or be gated to your org via Entra. Use if it must be internal-only. |
 | **SharePoint link** | Host on one of the above, then add the URL as a link or Embed web part on the Tools page. Techs are already in M365, so no extra login. |
 
 **Deploy steps (GitHub Pages):**
-1. Rename the file to `index.html` and put it in a repo (suggested repo name: `label-generator`). Keep the `/assets` folder beside it.
-2. Repo **Settings → Pages** → deploy from your branch. You get a URL like `youruser.github.io/label-generator/`.
+1. Rename the file to `index.html` and put it in the repo (`labels-v2`). Keep the `/assets` folder beside it.
+2. Repo **Settings → Pages** → deploy from your branch. The live URL is `https://steevesaj.github.io/labels-v2/`.
 3. Add that URL to the SharePoint Tools page.
 
 > Note: don't upload the HTML *into* SharePoint and expect it to run — modern SharePoint blocks scripts in uploaded files. Host it, then link to it.
