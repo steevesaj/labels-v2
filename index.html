@@ -75,13 +75,32 @@
   input:hover,textarea:hover,select:hover{border-color:#d3d9e2}
   input:focus,textarea:focus,select:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); background:var(--surface)}
   input.mono,textarea{font-family:var(--mono)}
+  input[type=number]{-moz-appearance:textfield}
+  input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
+  input.spin{-moz-appearance:auto}
+  input.spin::-webkit-outer-spin-button,input.spin::-webkit-inner-spin-button{-webkit-appearance:auto; opacity:1}
   textarea{min-height:80px; resize:vertical; line-height:1.5}
   .row{display:flex; gap:14px}
+  .ingrp{display:flex; align-items:center; background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:0 12px; transition:.12s}
+  .ingrp:hover{border-color:#d3d9e2}
+  .ingrp:focus-within{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); background:var(--surface)}
+  .ingrp .pfx{flex:none; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); padding-right:10px; margin-right:10px; border-right:1px solid var(--line)}
+  .ingrp input{flex:1; min-width:0; border:0!important; background:transparent!important; padding:11px 0!important; box-shadow:none!important}
+  .fitrow{display:flex; gap:10px}
+  .fitrow input{font-size:12px; padding-left:7px; padding-right:5px}
   .row>div{flex:1}
   .blk{margin-bottom:18px}
   .blk:last-child{margin-bottom:0}
   .hint{font-size:12px; color:var(--muted); margin-top:7px}
   .divider{height:1px; background:var(--line-2); margin:6px 0 18px}
+  .style-toggle{display:flex; align-items:center; gap:10px; width:100%; padding:11px 14px; background:var(--surface-2); border:1px solid var(--line); border-radius:10px; cursor:pointer; font:inherit; color:var(--ink); transition:.12s}
+  .style-toggle:hover{border-color:#d3d9e2}
+  .style-toggle .st-lab{font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--muted)}
+  .style-toggle .st-val{font-size:13.5px; font-weight:600; color:var(--ink)}
+  .style-toggle .st-caret{margin-left:auto; width:15px; height:15px; color:var(--muted); transition:transform .18s}
+  .style-toggle[aria-expanded="true"] .st-caret{transform:rotate(180deg)}
+  .style-panel{margin-top:12px}
+  .style-panel[hidden]{display:none}
   .tog-group{border:1px solid var(--line); border-radius:12px; overflow:hidden; background:var(--surface-2); margin-bottom:18px}
   .tog{display:flex; align-items:center; gap:12px; padding:13px 15px; cursor:pointer; margin:0; user-select:none}
   .tog + .tog{border-top:1px solid var(--line)}
@@ -94,6 +113,15 @@
   .track::before{content:''; position:absolute; left:3px; top:3px; width:18px; height:18px; background:#fff; border-radius:50%; transition:.16s; box-shadow:0 1px 3px rgba(0,0,0,.25)}
   .switch input:checked + .track{background:var(--accent)}
   .switch input:checked + .track::before{transform:translateX(18px)}
+
+  .tog-row{display:flex; gap:10px; margin-bottom:18px}
+  .tog-h{position:relative; flex:1; display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px; padding:14px 8px; border:1px solid var(--line); border-radius:12px; background:var(--surface-2); cursor:pointer; user-select:none; transition:border-color .13s}
+  .tog-h:hover{border-color:#cfd6df}
+  :root[data-theme="dark"] .tog-h:hover{border-color:#3a4554}
+  .tog-h .lab{font-size:12px; font-weight:600; color:var(--ink); line-height:1.25}
+  .tog-h .tip{position:absolute; bottom:calc(100% + 9px); left:50%; transform:translateX(-50%); width:158px; background:var(--ink); color:var(--surface); font-size:11px; font-weight:500; line-height:1.4; padding:7px 9px; border-radius:8px; box-shadow:var(--shadow); opacity:0; pointer-events:none; transition:opacity .14s; z-index:25}
+  .tog-h .tip::after{content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%); border:5px solid transparent; border-top-color:var(--ink)}
+  .tog-h:hover .tip{opacity:1; transition-delay:.45s}
 
   .subpanel{background:var(--surface-2); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:18px}
   .subpanel .sp-h{font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin:0 0 14px}
@@ -124,6 +152,14 @@
   .popitem svg{width:15px; height:15px; flex:none; color:var(--muted)}
   .popitem:hover svg{color:var(--accent)}
   .popitem span{margin-left:auto; font-family:var(--mono); font-size:11px; color:var(--muted); font-weight:500}
+  .popcheck{display:flex; align-items:center; gap:9px; padding:7px 9px; font-size:12.5px; font-weight:600; color:var(--ink); cursor:pointer; border-radius:7px; user-select:none}
+  .popcheck:hover{background:var(--surface-2)}
+  .popcheck input{accent-color:var(--accent); width:15px; height:15px; flex:none; cursor:pointer}
+  #exportAllMenu{left:auto; right:0; width:232px}
+  .xa-run{margin-top:5px; justify-content:center; background:var(--accent); color:#fff; border:0}
+  .xa-run:hover{background:var(--accent-press); color:#fff}
+  :root[data-theme="dark"] .xa-run{background:var(--accent); color:#fff}
+  :root[data-theme="dark"] .xa-run:hover{background:var(--accent-press); color:#fff}
 
   .readout{font-family:var(--mono); font-size:12.5px; color:var(--ink-2); background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:11px 13px; margin-top:14px; min-height:42px; display:flex; align-items:center; justify-content:center; text-align:center}
   .readout .warn{color:var(--red); font-weight:600}
@@ -229,70 +265,100 @@
             <div class="hint">Placement is top-left + gaps; right/bottom margins are whatever's left on the sheet. Test-print before a real run.</div>
           </div>
 
-          <div class="row blk">
-            <div><label class="fld" for="energy">Energy type</label><select id="energy"></select></div>
-            <div><label class="fld" for="company">Company</label><select id="company"></select></div>
+          <!-- Energy type + Company -->
+          <div class="blk" style="display:flex; gap:14px; align-items:flex-start">
+            <div style="flex:0.8 1 0"><label class="fld" for="energy">Energy type</label><select id="energy"></select></div>
+            <div style="flex:1.2 1 0"><label class="fld" for="company">Company</label><select id="company"></select></div>
           </div>
+
+          <!-- Collapsible style controls -->
+          <div class="blk">
+            <button class="style-toggle" id="styleToggle" type="button" aria-expanded="false">
+              <span class="st-lab">Style</span>
+              <span class="st-val" id="styleSummary">Modern &middot; New symbols</span>
+              <svg class="st-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+            </button>
+            <div class="style-panel" id="stylePanel" hidden>
+              <div style="display:flex; gap:14px; align-items:flex-start">
+                <div style="flex:1.5 1 0">
+                  <label class="fld">Label style</label>
+                  <div class="seg" role="tablist" style="margin-bottom:0">
+                    <button id="styleOG" role="tab" aria-selected="false">OG</button>
+                    <button id="styleClassic" role="tab" aria-selected="false">Classic</button>
+                    <button id="styleModern" role="tab" aria-selected="true">Modern</button>
+                  </div>
+                </div>
+                <div style="flex:1 1 0">
+                  <label class="fld">Symbol style</label>
+                  <div class="seg" role="tablist" style="margin-bottom:0">
+                    <button id="symNew" role="tab" aria-selected="true">New</button>
+                    <button id="symOld" role="tab" aria-selected="false">Old</button>
+                  </div>
+                </div>
+                <div style="flex:0.55 1 0">
+                  <label class="fld" for="pad">Padding</label>
+                  <input id="pad" class="mono spin" type="number" value="4" min="0" max="8">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
 
           <div class="blk">
-            <label class="fld">Label style</label>
-            <div class="seg" role="tablist">
-              <button id="styleModern" role="tab" aria-selected="true">Modern (new)</button>
-              <button id="styleClassic" role="tab" aria-selected="false">Classic (old)</button>
+            <div style="display:flex; gap:12px; align-items:flex-start">
+              <div style="flex:0 0 32%">
+                <label class="fld">Mode</label>
+                <div class="seg" role="tablist" style="margin-bottom:0">
+                  <button id="tabRange" role="tab" aria-selected="true">Range</button>
+                  <button id="tabList" role="tab" aria-selected="false">Tags</button>
+                </div>
+              </div>
+              <div id="rangeFields" style="flex:1 1 0">
+                <label class="fld">Range</label>
+                <div class="row" style="gap:10px">
+                  <div class="ingrp"><span class="pfx">From</span><input id="start" class="mono spin" type="number" value="1" aria-label="From (start tag)"></div>
+                  <div class="ingrp"><span class="pfx">To</span><input id="end" class="mono spin" type="number" value="1000" aria-label="To (end tag)"></div>
+                </div>
+              </div>
+              <div id="listFields" style="flex:1 1 0; display:none">
+                <label class="fld" for="list">Tag numbers</label>
+                <textarea id="list" placeholder="42, 108, 511" style="min-height:42px">42, 108, 511</textarea>
+              </div>
             </div>
+            <input type="hidden" id="prefix" value="E-">
           </div>
 
           <div class="divider"></div>
 
-          <div class="seg" role="tablist">
-            <button id="tabRange" role="tab" aria-selected="true">Number range</button>
-            <button id="tabList" role="tab" aria-selected="false">Specific tags</button>
-          </div>
-
-          <div id="rangeFields">
-            <div class="row blk">
-              <div><label class="fld" for="start">From</label><input id="start" class="mono" type="number" value="1"></div>
-              <div><label class="fld" for="end">To</label><input id="end" class="mono" type="number" value="1000"></div>
+          <div class="blk">
+            <div class="fitrow">
+              <div style="flex:1 1 0"><label class="fld" for="phone">Phone</label><input id="phone" class="mono" value="+1 657-502-6544"></div>
+              <div style="flex:1 1 0"><label class="fld" for="tech">Tech</label><input id="tech" placeholder="N. Peart"></div>
+              <div style="flex:1 1 0">
+                <div style="display:flex; gap:8px">
+                  <div style="flex:1 1 0"><label class="fld" for="site">Site</label><input id="site" class="mono" placeholder="YVR6" value="YVR6"></div>
+                  <div style="flex:1 1 0"><label class="fld" for="qrYear">Year</label><input id="qrYear" class="mono spin" type="number" value="2026"></div>
+                </div>
+              </div>
             </div>
-          </div>
-
-          <div id="listFields" style="display:none">
-            <div class="blk">
-              <label class="fld" for="list">Tag numbers</label>
-              <textarea id="list" placeholder="42, 108, 511">42, 108, 511</textarea>
-              <div class="hint">For reprints &mdash; comma or space separated, enter only the tags you need.</div>
-            </div>
-          </div>
-
-          <div class="row blk">
-            <div><label class="fld" for="prefix">Prefix</label><input id="prefix" class="mono" value="E-"></div>
-            <div><label class="fld" for="pad">Pad to digits</label><input id="pad" class="mono" type="number" value="4" min="0" max="8"></div>
-          </div>
-
-          <div class="divider"></div>
-
-          <div class="row blk">
-            <div><label class="fld" for="phone">Phone</label><input id="phone" class="mono" value="+1 657-502-6544"></div>
-            <div><label class="fld" for="tech">Technician name</label><input id="tech" placeholder="e.g. J. Smith"></div>
-          </div>
-
-          <div class="row blk">
-            <div><label class="fld" for="site">Site code</label><input id="site" class="mono" placeholder="YVR6" value="YVR6"></div>
-            <div><label class="fld" for="qrYear">Asset ID year</label><input id="qrYear" class="mono" type="number" value="2026"></div>
           </div>
           <div class="hint" id="assetPreview" style="margin:-10px 0 18px"></div>
 
-          <div class="tog-group">
-            <label class="tog">
-              <div><div class="lab">Site code line</div><div class="sub">Small line above the tag number</div></div>
+          <div class="tog-row">
+            <label class="tog-h">
+              <span class="tip">Small line above the tag number</span>
+              <span class="lab">Site code line</span>
               <span class="switch"><input type="checkbox" id="showSite"><span class="track"></span></span>
             </label>
-            <label class="tog">
-              <div><div class="lab">QR asset tag</div><div class="sub">Scannable ID &middot; centers the layout</div></div>
+            <label class="tog-h">
+              <span class="tip">Scannable asset ID &middot; sits beside the number</span>
+              <span class="lab">QR asset tag</span>
               <span class="switch"><input type="checkbox" id="showQR"><span class="track"></span></span>
             </label>
-            <label class="tog">
-              <div><div class="lab">Asset ID text</div><div class="sub">Printed code under the QR / number</div></div>
+            <label class="tog-h">
+              <span class="tip">Asset ID printed vertically along the right edge</span>
+              <span class="lab">Asset ID text</span>
               <span class="switch"><input type="checkbox" id="showAsset" checked><span class="track"></span></span>
             </label>
           </div>
@@ -336,11 +402,28 @@
               </div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Preview + stats -->
+          <div class="actions">
+            <button class="btn2" id="btnCalib" title="Printer alignment test for the current format">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="3"></circle><path d="M12 1v3M12 20v3M1 12h3M20 12h3"></path></svg>
+              Calibration sheet
+            </button>
+            <div class="menu-wrap">
+              <button class="btn2" id="btnExportAll" title="Export several outputs at once" aria-haspopup="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"></path><path d="M7 10l5 5 5-5"></path><path d="M5 21h14"></path></svg>
+                Export All
+                <svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+              </button>
+              <div class="popmenu" id="exportAllMenu" hidden>
+                <label class="popcheck"><input type="checkbox" id="xaLabels" checked> Labels (PDF)</label>
+                <label class="popcheck"><input type="checkbox" id="xaXlsx" checked> Manifest (XLSX)</label>
+                <label class="popcheck"><input type="checkbox" id="xaCsv"> Manifest (CSV)</label>
+                <label class="popcheck"><input type="checkbox" id="xaProofFill" checked> QA Proof Sheet (fillable)</label>
+                <label class="popcheck"><input type="checkbox" id="xaProofStatic"> QA Proof Sheet (non-fillable)</label>
+                <label class="popcheck"><input type="checkbox" id="xaCalib"> Calibration sheet</label>
+                <button class="btn2 xa-run" id="xaRun">Export selected</button>
+              </div>
+            </div>
+          </div>
     <div>
       <div class="card">
         <div class="card-head"><h2>Live preview</h2><span class="tag-n" id="previewOf"></span></div>
@@ -399,7 +482,7 @@
      LAYOUTS       -> page size, grid, label size, margins, gaps (Avery presets + Custom)
    ASSETS load by relative path; serve /assets beside this file (GitHub Pages).
    ========================================================================= */
-const VERSION = "3.2.0";
+const VERSION = "4.0.0";
 const BUILD_DATE = "2026-06-18";
 const PT = 72;
 const LS = 'ilg.settings';
@@ -415,12 +498,12 @@ const THEMES = {
 
 /* --- ENERGY TYPES --- */
 const ENERGY_TYPES = {
-  electrical: { label:"Electrical", prefix:"E-",  pad:4, company:"psg",   theme:"red",    symbol:"assets/symbols/electrical.svg" },
-  gas:        { label:"Gas",        prefix:"G-",  pad:3, company:"psg",   theme:"orange", symbol:"assets/symbols/gas.svg" },
-  pneumatic:  { label:"Pneumatic",  prefix:"P-",  pad:3, company:"psg",   theme:"blue",   symbol:"assets/symbols/pneumatic.svg" },
-  gravity:    { label:"Gravity",    prefix:"GR-", pad:3, company:"psg",   theme:"black",  symbol:"assets/symbols/gravity.svg" },
-  water:      { label:"Water",      prefix:"W-",  pad:3, company:"psg",   theme:"teal",   symbol:"assets/symbols/water.svg" },
-  hydraulic:  { label:"Hydraulic",  prefix:"H-",  pad:4, company:"magna", theme:"blue",   symbol:"assets/symbols/hydraulic.svg" }
+  electrical: { label:"Electrical", prefix:"E-",  pad:4, company:"psg",   theme:"red",    symbol:"assets/symbols/electrical.svg", symbolNew:"assets/symbols/electrical_new.svg" },
+  gas:        { label:"Gas",        prefix:"G-",  pad:3, company:"psg",   theme:"orange", symbol:"assets/symbols/gas.svg", symbolNew:"assets/symbols/gas_new.svg" },
+  pneumatic:  { label:"Pneumatic",  prefix:"P-",  pad:3, company:"psg",   theme:"blue",   symbol:"assets/symbols/pneumatic.svg", symbolNew:"assets/symbols/pneumatic_new.svg" },
+  gravity:    { label:"Gravity",    prefix:"GR-", pad:3, company:"psg",   theme:"black",  symbol:"assets/symbols/gravity.svg", symbolNew:"assets/symbols/gravity_new.svg" },
+  water:      { label:"Water",      prefix:"W-",  pad:3, company:"psg",   theme:"teal",   symbol:"assets/symbols/water.svg", symbolNew:"assets/symbols/water_new.svg" },
+  hydraulic:  { label:"Hydraulic",  prefix:"H-",  pad:4, company:"magna", theme:"blue",   symbol:"assets/symbols/hydraulic.svg", symbolNew:"assets/symbols/hydraulic_new.svg", symScale:1.15 }
 };
 
 /* --- COMPANIES: logo + default phone --- */
@@ -442,6 +525,7 @@ const BLACK=[0,0,0], GREY=[150,150,150];
 
 let mode='range', curFormat='ol996wj', curEnergy='electrical', curCompany='psg';
 let curStyle='modern';
+let curSymbolStyle='new';
 let pvIndex=0;
 function previewNums(){ return getNumbers().nums; }
 function clampPvIndex(){ const n=previewNums().length; if(pvIndex<0)pvIndex=0; if(n && pvIndex>n-1)pvIndex=n-1; if(!n)pvIndex=0; }
@@ -481,21 +565,41 @@ function canvasPen(ctx,S){
 
 /* ---------- asset loading ---------- */
 function loadImage(src){ return new Promise((ok,no)=>{ const im=new Image(); im.onload=()=>ok(im); im.onerror=()=>no(new Error(src)); im.src=src; }); }
-async function svgToCanvas(src){
-  const txt = await (await fetch(src)).text();
+async function svgToCanvas(src, tint){
+  let txt = await (await fetch(src)).text();
+  if(tint){ const hex='#'+tint.map(v=>Math.max(0,Math.min(255,v|0)).toString(16).padStart(2,'0')).join(''); txt = txt.replace(/#000000|#0d0d0d|#000(?![0-9a-f])/gi, hex); }
   let aspect=1; const vb=txt.match(/viewBox\s*=\s*["']([\d.\s,-]+)["']/i);
   if(vb){ const p=vb[1].trim().split(/[\s,]+/).map(Number); if(p.length===4 && p[3]>0) aspect=p[2]/p[3]; }
-  const h=240, w=Math.max(1,Math.round(h*aspect));
+  const h=480, w=Math.max(1,Math.round(h*aspect));
   const url=URL.createObjectURL(new Blob([txt],{type:'image/svg+xml'}));
   const img=await loadImage(url);
   const cv=document.createElement('canvas'); cv.width=w; cv.height=h; cv.getContext('2d').drawImage(img,0,0,w,h);
   URL.revokeObjectURL(url);
-  return { dataURL: cv.toDataURL('image/png'), aspect, canvas:cv };
+  const t=trimCanvas(cv);
+  return { dataURL: t.toDataURL('image/png'), aspect:t.width/t.height, canvas:t };
 }
-async function ensureSymbol(type){
-  if(type in symCache) return symCache[type];
-  try{ symCache[type]=await svgToCanvas(ENERGY_TYPES[type].symbol); }catch(e){ symCache[type]=null; }
-  return symCache[type];
+/* trim fully-transparent margins so a symbol centers on its real content, not its SVG padding */
+function trimCanvas(cv){
+  try{
+    const ctx=cv.getContext('2d'), W=cv.width, H=cv.height, d=ctx.getImageData(0,0,W,H).data;
+    let x0=W,y0=H,x1=-1,y1=-1;
+    for(let y=0;y<H;y++){ const r=y*W; for(let x=0;x<W;x++){ if(d[(r+x)*4+3]>8){ if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; } } }
+    if(x1<x0||y1<y0) return cv;
+    const tw=x1-x0+1, th=y1-y0+1, out=document.createElement('canvas'); out.width=tw; out.height=th;
+    out.getContext('2d').drawImage(cv, x0,y0,tw,th, 0,0,tw,th);
+    return out;
+  }catch(e){ return cv; }
+}
+function symKey(type, style){ return type+'_'+(style||curSymbolStyle); }
+async function ensureSymbol(type, style){
+  style = style || curSymbolStyle;
+  const key = symKey(type, style);
+  if(key in symCache) return symCache[key];
+  const et = ENERGY_TYPES[type];
+  const src = (style==='new' && et.symbolNew) ? et.symbolNew : et.symbol;
+  const tint = (style==='new' && type!=='electrical') ? theme(et).color : null;
+  try{ symCache[key]=await svgToCanvas(src, tint); }catch(e){ symCache[key]=null; }
+  return symCache[key];
 }
 async function ensureLogo(co){
   if(co in logoCache) return logoCache[co];
@@ -513,7 +617,7 @@ async function applyEnergy(){
   const t=ENERGY_TYPES[curEnergy];
   $('prefix').value=t.prefix; $('pad').value=t.pad;
   curCompany=t.company; $('company').value=curCompany;
-  await ensureSymbol(curEnergy);
+  await ensureSymbol(curEnergy, curSymbolStyle);
   await applyCompany();
 }
 async function applyCompany(){
@@ -529,7 +633,7 @@ function applyFormat(){
 }
 function updateHints(){
   const miss=[];
-  if(symCache[curEnergy]===null)   miss.push(ENERGY_TYPES[curEnergy].symbol);
+  if(symCache[symKey(curEnergy)]===null)   miss.push(curSymbolStyle==='new'?ENERGY_TYPES[curEnergy].symbolNew:ENERGY_TYPES[curEnergy].symbol);
   if(logoCache[curCompany]===null) miss.push(COMPANIES[curCompany].logo);
   $('assetHints').textContent = miss.length ? ('Missing asset file(s): '+miss.join(', ')) : '';
 }
@@ -574,149 +678,233 @@ function yy(){ const yr=($('qrYear').value||'').trim(); return yr.length>2 ? yr.
 function fitFont(pen, text, maxW, startPt, minPt){ let fs=startPt, g=0; while(fs>minPt && pen.measure(text, fs, true) > maxW && g++<300) fs-=0.5; return fs; }
 
 /* ---------- content drawers (theme-aware, scale to the label box; pen = PDF or canvas) ---------- */
+/* CLASSIC style — blue title with a full-width underline rule; a main row of
+   hazard symbol (left) / large number (center) / QR + asset id (right); a
+   logo-left / phone-right footer; then a divider rule and a black DO NOT REMOVE
+   THIS TAG along the bottom. Adapts when QR / site code are absent. */
 function drawIso(pen,x,y,w,h,c){
-  const ins=h*0.05;
-  const r=(c.radius!=null?c.radius:h*0.07);
-  const ix=x+ins, iy=y+ins, iw=w-2*ins, ih=h-2*ins;
-  const cx=x+w/2;
-  if(!isWhite(c.bg)) pen.fillRoundRect(ix, iy, iw, ih, r, c.bg);
+  const ins=h*0.045, r=(c.radius!=null?c.radius:h*0.075);
+  const ix=x+ins, iy=y+ins, iw=w-2*ins, ih=h-2*ins, cx=x+w/2;
+  pen.fillRoundRect(ix, iy, iw, ih, r, isWhite(c.bg)?[255,255,255]:c.bg);
 
-  // four stacked zones (fractions of interior height): header / main / footer / warning
-  const headBot=iy+ih*0.235;
-  const mTop=headBot,  mBot=iy+ih*0.640;
-  const fTop=mBot,     fBot=iy+ih*0.845;
-  const wTop=fBot;
-  const mainCy=(mTop+mBot)/2, mainH=mBot-mTop;
+  // header: blue title with a full-width underline rule
+  const headFs=fitFont(pen, c.header, iw*0.94, h*0.105, h*0.052);
+  pen.text(c.header, cx, iy+ih*0.135, headFs, c.col, 'center', true);
+  const headRuleY=iy+ih*0.168;
+  pen.fillRect(ix+iw*0.03, headRuleY, iw*0.94, Math.max(0.8, h*0.010), c.col);
 
-  // --- header + underline rule ---
-  pen.text(c.header, cx, iy+ih*0.150, fitFont(pen,c.header,iw*0.92,h*0.092,h*0.046), c.col,'center',true);
-  pen.fillRect(ix+iw*0.05, headBot-ih*0.050, iw*0.90, Math.max(0.7,h*0.0065), c.col);
+  // main row between the header rule and the footer
+  const bodyTop=headRuleY;
+  const mainBot=iy+ih*0.640;
+  const mainH=mainBot-bodyTop, rowCy=(bodyTop+mainBot)/2;
 
-  // --- QR (right) first so it anchors the main row; asset id sits beneath it ---
-  let qrLeft=ix+iw, rowCy=mainCy;
-  if(c.qr){
-    const qrS=Math.min(mainH*0.80, w*0.22);
-    const qrX=ix+iw-w*0.02-qrS, qrY=mTop+mainH*0.02;
-    drawQR(pen, c.qr, qrX, qrY, qrS);
-    qrLeft=qrX; rowCy=qrY+qrS/2;
-    if(c.assetId){
-      const fs=fitFont(pen, c.assetId, qrS+w*0.06, h*0.040, h*0.024);
-      pen.text(c.assetId, qrX+qrS/2, qrY+qrS+h*0.046, fs, BLACK,'center',false);
-    }
-  } else if(c.assetId){
-    // no QR: asset id runs vertically up the right interior edge
-    const fs=fitFont(pen, c.assetId, mainH*0.92, h*0.044, h*0.028);
-    const tw=pen.measure(c.assetId, fs, true);
-    pen.textRot(c.assetId, ix+iw - fs*0.28, rowCy+tw/2, fs, BLACK, true);
-    qrLeft = ix+iw - fs*1.35;
+  // asset id — vertical along the right interior border; the strip is reserved even when
+  // hidden so the number & QR keep the same size and position with or without it
+  let rightBound = ix+iw - w*0.018 - (h*0.048)*1.15;
+  if(c.assetId){
+    const aFs=fitFont(pen, c.assetId, mainH*0.90, h*0.048, h*0.026);
+    const tw=pen.measure(c.assetId, aFs, true);
+    pen.textRot(c.assetId, ix+iw - w*0.018, iy+ih*0.5+tw/2, aFs, c.col, true);
   }
-
-  // --- hazard symbol (left), centered on the main row ---
-  const symH=mainH*0.90;
-  if(c.sym) pen.fitImage(c.sym,'PNG', ix+w*0.01, rowCy-symH/2, w*0.20, symH, c.symAlias);
-
-  // --- number column between symbol and QR (mirrored right margin when no QR) ---
-  const colL=ix+w*0.22;
-  const colR=c.qr ? qrLeft-w*0.025 : ix+iw-w*0.20;
-  const colCx=(colL+colR)/2, colW=Math.max(w*0.2, colR-colL);
-  if(c.siteCode){
-    const siteFs=fitFont(pen, c.siteCode, colW, h*0.078, h*0.04);
-    const numFs =fitFont(pen, c.text, colW*0.98, h*0.21, h*0.075);
-    const gap=h*0.012, tot=siteFs+gap+numFs;
-    let ty=rowCy-tot/2;
-    pen.text(c.siteCode, colCx, ty+siteFs*0.82, siteFs, c.col,'center',true); ty+=siteFs+gap;
-    pen.text(c.text, colCx, ty+numFs*0.80, numFs, c.num,'center',true);
-  } else {
-    const numFs=fitFont(pen, c.text, colW*0.98, h*0.25, h*0.08);
-    pen.text(c.text, colCx, rowCy+numFs*0.34, numFs, c.num,'center',true);
-  }
-
-  // --- footer: logo (left) + phone (right), vertically centered ---
-  const fCy=(fTop+fBot)/2, fH=fBot-fTop;
-  if(c.logo){ const lh=fH*0.86, lw=Math.min(iw*0.50, w*0.36); pen.fitImage(c.logo,c.logoFmt, ix+iw*0.04, fCy-lh/2, lw, lh, c.logoAlias); }
-  else pen.text('[ logo ]', ix+iw*0.18, fCy+h*0.018, h*0.05, GREY,'center',false);
-  pen.text(c.phone, ix+iw-iw*0.04, fCy+h*0.018, fitFont(pen,c.phone,iw*0.48,h*0.072,h*0.042), BLACK,'right',true);
-
-  // --- warning band: rule + bold caption ---
-  pen.fillRect(ix+iw*0.05, wTop+ih*0.01, iw*0.90, Math.max(0.7,h*0.0065), c.col);
-  const warnFs=fitFont(pen,'DO NOT REMOVE THIS TAG',iw*0.92,h*0.060,h*0.034);
-  pen.text('DO NOT REMOVE THIS TAG', cx, (wTop+(iy+ih))/2 + warnFs*0.36, warnFs, c.col,'center',true);
-
-  // --- crisp outer border last ---
-  pen.strokeRoundRect(ix, iy, iw, ih, r, c.col, Math.max(1, h*0.016));
-}
-/* MODERN style — filled red header banner; centered number, hazard+site row,
-   and phone/DO-NOT-REMOVE/logo stack. QR (when on) sits upper-right and the
-   content column recenters into the space left of it. Adapts when QR/site absent. */
-function drawIsoModern(pen,x,y,w,h,c){
-  const ins=h*0.04, r=(c.radius!=null?c.radius:h*0.085);
-  // base fill (theme bg or white), clipped to rounded label
-  pen.fillRoundRect(x+ins, y+ins, w-2*ins, h-2*ins, r, isWhite(c.bg)?[255,255,255]:c.bg);
-  // header band: rounded top, squared bottom
-  const bx=x+ins, by=y+ins, bw=w-2*ins, bh=h*0.180;
-  pen.fillRoundRect(bx, by, bw, bh, r, c.col);
-  pen.fillRect(bx, by+bh*0.5, bw, bh*0.55, c.col);
-  pen.text(c.header, x+w/2, by+bh*0.70, fitFont(pen, c.header, bw*0.92, h*0.090, h*0.05), [255,255,255], 'center', true);
-
-  const bodyTop=by+bh, bodyBot=y+h-ins, bodyH=bodyBot-bodyTop, interiorR=x+w-ins;
-
-  // QR upper-right (optional) — asset id sits beneath it
-  let qrLeft=interiorR;
+  // QR (optional) sits just left of the asset-id strip
+  let qrLeft=rightBound;
   if(c.qr){
-    const qrS=Math.min(bodyH*0.46, w*0.30);
-    const qrX=interiorR-w*0.04-qrS, qrY=bodyTop+bodyH*0.06;
+    const qrS=Math.min(mainH*0.86, w*0.26) * 0.80;
+    const qrX=rightBound - w*0.02 - qrS, qrY=rowCy - qrS/2;
     drawQR(pen, c.qr, qrX, qrY, qrS);
     qrLeft=qrX;
-    if(c.assetId){
-      const fs=fitFont(pen, c.assetId, qrS+w*0.06, h*0.042, h*0.024);
-      pen.text(c.assetId, qrX+qrS/2, qrY+qrS+h*0.054, fs, BLACK, 'center', false);
-    }
-  } else if(c.assetId){
-    // no QR: asset id runs vertically up the right interior edge of the body
-    const fs=fitFont(pen, c.assetId, bodyH*0.62, h*0.044, h*0.026);
-    const tw=pen.measure(c.assetId, fs, true);
-    const cyA=bodyTop+bodyH*0.40;
-    pen.textRot(c.assetId, interiorR - w*0.015, cyA+tw/2, fs, BLACK, true);
-    qrLeft = interiorR - w*0.015 - fs*1.2;
   }
 
-  // content column = everything except the QR; horizontally centered within its width
-  const colL=x+ins+w*0.04;
-  const colR=(c.qr ? qrLeft - w*0.03 : interiorR - w*0.04);
+  // hazard symbol (left), centered on the main row — enlarged, allowed to use the
+  // padding above/below the row so it reads as boldly as the number
+  const symH=mainH*0.78, symW=Math.min(iw*0.27, symH), sSc=c.symScale||1, sCx=ix+iw*0.19;
+  if(c.sym) pen.fitImage(c.sym,'PNG', sCx-symW*sSc/2, rowCy-symH*sSc/2, symW*sSc, symH*sSc, c.symAlias);
+  else pen.text('[ symbol ]', sCx, rowCy, h*0.05, GREY, 'center', false);
+
+  // number — centered in the gap between the symbol and the right boundary (QR / asset-id strip / edge)
+  const colL=sCx + symW*sSc/2 + w*0.03;
+  const colR=qrLeft - w*0.025;
   const colCx=(colL+colR)/2, colW=Math.max(w*0.2, colR-colL);
+  if(c.siteCode){
+    const siteFs=fitFont(pen, c.siteCode, colW*0.92, h*0.095, h*0.050);
+    const numFs =fitFont(pen, c.text, colW*0.98, h*0.28, h*0.090);
+    const gap=h*0.010, tot=siteFs+gap+numFs;
+    let ty=rowCy-tot/2 + h*0.016;
+    pen.text(c.siteCode, colCx, ty+siteFs*0.82, siteFs, c.col, 'center', true); ty+=siteFs+gap;
+    pen.text(c.text, colCx, ty+numFs*0.80, numFs, c.num, 'center', true);
+  } else {
+    const numFs=fitFont(pen, c.text, colW*0.98, h*0.30, h*0.10);
+    pen.text(c.text, colCx, rowCy+numFs*0.34, numFs, c.num, 'center', true);
+  }
 
-  // number (centered, large)
-  const numFs=fitFont(pen, c.text, colW, h*0.21, h*0.085);
-  pen.text(c.text, colCx, bodyTop+bodyH*0.270, numFs, c.num, 'center', true);
+  // footer: logo (left) + phone (right)
+  const fCy=iy+ih*0.745, fH=ih*0.140;
+  if(c.logo){ const lh=fH, lw=Math.min(iw*0.46, w*0.40); pen.fitImage(c.logo,c.logoFmt, ix+iw*0.04, fCy-lh/2, lw, lh, c.logoAlias); }
+  else pen.text('[ logo ]', ix+iw*0.18, fCy+h*0.018, h*0.05, GREY, 'center', false);
+  const phoneFs=fitFont(pen, c.phone, iw*0.46, h*0.10, h*0.05);
+  pen.text(c.phone, ix+iw - iw*0.04, fCy+phoneFs*0.34, phoneFs, BLACK, 'right', true);
 
-  // hazard symbol + site code, centered as a single group
-  const haveSite=!!c.siteCode;
-  const rowCy=bodyTop+bodyH*0.46;
-  const triH=bodyH*(haveSite?0.30:0.36);
-  const triW=c.sym?triH:0;
-  let siteFs=0, siteW=0;
-  if(haveSite){ siteFs=fitFont(pen, c.siteCode, colW*0.62, h*0.16, h*0.05); siteW=pen.measure(c.siteCode, siteFs, true); }
-  const innerGap=(c.sym&&haveSite)?w*0.035:0;
-  const groupW=triW+innerGap+siteW;
-  let gx=colCx-groupW/2;
-  if(c.sym){ pen.fitImage(c.sym,'PNG', gx, rowCy-triH/2, triW, triH, c.symAlias); gx+=triW+innerGap; }
-  if(haveSite){ pen.text(c.siteCode, gx, rowCy+siteFs*0.34, siteFs, c.num, 'left', true); }
-
-  // footer: DO NOT REMOVE (centered) above a logo-left / phone-right row, anchored above the bottom edge
-  const fgap=h*0.020, botMargin=h*0.048;
-  const dnrFs=fitFont(pen,'DO NOT REMOVE THIS TAG', bw*0.90, h*0.058, h*0.036);
-  const phoneFs=fitFont(pen, c.phone, bw*0.44, h*0.075, h*0.044);
-  const logoH=c.logo?bodyH*0.16:h*0.05;
-  const rowH=Math.max(logoH, phoneFs*1.1);
-  let fy=bodyBot-(dnrFs+fgap+rowH)-botMargin;
-  pen.text('DO NOT REMOVE THIS TAG', x+w/2, fy+dnrFs*0.8, dnrFs, c.col, 'center', true);
-  const rCy=fy+dnrFs+fgap+rowH/2;
-  if(c.logo){ const lw=Math.min(w*0.40, bw*0.44); pen.fitImage(c.logo,c.logoFmt, bx+bw*0.04, rCy-logoH/2, lw, logoH, c.logoAlias); }
-  else pen.text('[ logo ]', bx+bw*0.16, rCy+h*0.018, h*0.045, GREY, 'center', false);
-  pen.text(c.phone, bx+bw-bw*0.04, rCy+phoneFs*0.34, phoneFs, BLACK, 'right', true);
+  // bottom divider rule, then DO NOT REMOVE THIS TAG (theme color), centered
+  // equidistant between the rule and the lower border
+  const ruleY=iy+ih*0.850;
+  pen.fillRect(ix+iw*0.03, ruleY, iw*0.94, Math.max(0.8, h*0.010), c.col);
+  const dnrFs=fitFont(pen,'DO NOT REMOVE THIS TAG', iw*0.9, h*0.090, h*0.044);
+  pen.text('DO NOT REMOVE THIS TAG', cx, iy+ih*0.925 + dnrFs*0.36, dnrFs, c.col, 'center', true);
 
   // crisp outer border last
-  pen.strokeRoundRect(x+ins, y+ins, w-2*ins, h-2*ins, r, c.col, Math.max(1, h*0.02));
+  pen.strokeRoundRect(ix, iy, iw, ih, r, c.col, Math.max(1, h*0.014));
+}
+/* MODERN style — filled theme-color header banner with a white title; a single
+   main row of hazard symbol (left) / large number (center) / QR + asset id
+   (right); a full-width divider rule; a centered DO NOT REMOVE THIS TAG; and a
+   footer of logo (left) + phone (right). Adapts when QR / site code are absent. */
+function drawIsoModern(pen,x,y,w,h,c){
+  const ins=h*0.035, r=(c.radius!=null?c.radius:h*0.085);
+  const ix=x+ins, iy=y+ins, iw=w-2*ins, ih=h-2*ins, cx=x+w/2;
+  // base fill (theme bg or white)
+  pen.fillRoundRect(ix, iy, iw, ih, r, isWhite(c.bg)?[255,255,255]:c.bg);
+
+  // header band: rounded top, squared bottom, white title
+  const bh=ih*0.205;
+  pen.fillRoundRect(ix, iy, iw, bh, r, c.col);
+  pen.fillRect(ix, iy+bh*0.5, iw, bh*0.55, c.col);
+  pen.text(c.header, cx, iy+bh*0.68, fitFont(pen, c.header, iw*0.92, h*0.092, h*0.05), [255,255,255], 'center', true);
+
+  // main row sits between header and the divider rule; footer is below the rule
+  const bodyTop=iy+bh;
+  const ruleY=iy+ih*0.700;
+  const mainH=ruleY-bodyTop, rowCy=(bodyTop+ruleY)/2;
+
+  // asset id — always vertical along the right interior border (simple & legible)
+  let rightBound = ix+iw - w*0.018 - (h*0.048)*1.15;
+  if(c.assetId){
+    const aFs=fitFont(pen, c.assetId, mainH*0.88, h*0.048, h*0.026);
+    const tw=pen.measure(c.assetId, aFs, true);
+    pen.textRot(c.assetId, ix+iw - w*0.018, iy+ih*0.5+tw/2, aFs, c.col, true);
+  }
+  // QR (optional) sits just left of the asset-id strip — shrunk so the number reads first
+  let qrLeft=rightBound;
+  if(c.qr){
+    const qrS=Math.min(mainH*0.80, w*0.27) * 0.80;
+    const qrX=rightBound - w*0.02 - qrS, qrY=rowCy - qrS/2;
+    drawQR(pen, c.qr, qrX, qrY, qrS);
+    qrLeft=qrX;
+  }
+
+  // hazard symbol (left), centered on the main row
+  const symH=mainH*0.79, symW=Math.min(iw*0.27, symH), sSc=c.symScale||1, sCx=ix+iw*0.18;
+  if(c.sym) pen.fitImage(c.sym,'PNG', sCx-symW*sSc/2, rowCy-symH*sSc/2, symW*sSc, symH*sSc, c.symAlias);
+  else pen.text('[ symbol ]', sCx, rowCy, h*0.05, GREY, 'center', false);
+
+  // number — centered in the gap between the symbol and the right boundary (QR / asset-id strip / edge)
+  const colL=sCx + symW*sSc/2 + w*0.03;
+  const colR=qrLeft - w*0.025;
+  const colCx=(colL+colR)/2, colW=Math.max(w*0.2, colR-colL);
+  if(c.siteCode){
+    const siteFs=fitFont(pen, c.siteCode, colW*0.9, h*0.085, h*0.045);
+    const numFs =fitFont(pen, c.text, colW*0.98, h*0.22, h*0.085);
+    const gap=h*0.012, tot=siteFs+gap+numFs;
+    let ty=rowCy-tot/2;
+    pen.text(c.siteCode, colCx, ty+siteFs*0.82, siteFs, c.col, 'center', true); ty+=siteFs+gap;
+    pen.text(c.text, colCx, ty+numFs*0.80, numFs, c.num, 'center', true);
+  } else {
+    const numFs=fitFont(pen, c.text, colW*0.98, h*0.26, h*0.09);
+    pen.text(c.text, colCx, rowCy+numFs*0.34, numFs, c.num, 'center', true);
+  }
+
+  // divider rule under the main row, then DO NOT REMOVE THIS TAG — placed high so the
+  // header → number → warning stack frames the most important info top to bottom
+  pen.fillRect(ix+iw*0.086, ruleY, iw*0.828, Math.max(0.8, h*0.009), c.col);
+  const dnrFs=fitFont(pen,'DO NOT REMOVE THIS TAG', iw*0.9, h*0.082, h*0.042);
+  pen.text('DO NOT REMOVE THIS TAG', cx, iy+ih*0.800, dnrFs, c.col, 'center', true);
+
+  // footer: logo (left) + phone (right) at the bottom
+  const fCy=iy+ih*0.910, fH=ih*0.135;
+  if(c.logo){ const lh=fH, lw=Math.min(iw*0.46, w*0.40); pen.fitImage(c.logo,c.logoFmt, ix+iw*0.04, fCy-lh/2, lw, lh, c.logoAlias); }
+  else pen.text('[ logo ]', ix+iw*0.18, fCy+h*0.018, h*0.05, GREY, 'center', false);
+  const phoneFs=fitFont(pen, c.phone, iw*0.46, h*0.10, h*0.05);
+  pen.text(c.phone, ix+iw - iw*0.04, fCy+phoneFs*0.34, phoneFs, BLACK, 'right', true);
+
+  // crisp outer border last
+  pen.strokeRoundRect(ix, iy, iw, ih, r, c.col, Math.max(1, h*0.015));
+}
+/* OG style — the original tag layout: theme-color double frame, full-width header,
+   big hazard symbol on the left, and a right-hand stack of tag number / company
+   logo / phone, with DO NOT REMOVE THIS TAG centered along the bottom. Site code,
+   QR and asset id adapt in when their toggles are on. */
+function drawIsoOG(pen,x,y,w,h,c){
+  const ins=h*0.05;
+  const r=(c.radius!=null?c.radius:h*0.11);
+  const ix=x+ins, iy=y+ins, iw=w-2*ins, ih=h-2*ins;
+  const cx=x+w/2;
+  if(!isWhite(c.bg)) pen.fillRoundRect(ix,iy,iw,ih,r,c.bg);
+
+  // header — shifted left, theme color
+  const headFs=fitFont(pen,c.header,iw*0.92,h*0.130,h*0.058);
+  pen.text(c.header, cx, iy+ih*0.150, headFs, c.col,'center',true);
+
+  const bodyTop=iy+ih*0.205, bodyBot=iy+ih*0.840, bodyH=bodyBot-bodyTop;
+
+  // hazard symbol — left, nudged up slightly
+  const symBoxW=iw*0.28, symBoxH=bodyH*0.65, sSc=c.symScale||1;
+  const sCx=ix+iw*0.21, sCy=bodyTop+bodyH*0.45;
+  if(c.sym) pen.fitImage(c.sym,'PNG', sCx-symBoxW*sSc/2, sCy-symBoxH*sSc/2, symBoxW*sSc, symBoxH*sSc, c.symAlias);
+  else pen.text('[ symbol ]', ix+iw*0.21, bodyTop+bodyH*0.52, h*0.05, GREY,'center',false);
+
+  // right column — pulled left so the stack is balanced and clear of the asset strip
+  const colL=ix+iw*0.40, colR=ix+iw*0.90;
+  const colCx=(colL+colR)/2, colW=colR-colL;
+
+  // asset id — always vertical along the right interior border, centered on the label,
+  // shifted in so it clears the inner frame line
+  if(c.assetId){
+    const aFs=fitFont(pen, c.assetId, bodyH*0.84, h*0.048, h*0.028);
+    const tw=pen.measure(c.assetId, aFs, true);
+    pen.textRot(c.assetId, ix+iw - w*0.05, iy+ih*0.5+tw/2, aFs, c.col, true);
+  }
+
+  // number vertical center — sits midway between the heading and the logo
+  const numCy = bodyTop + bodyH*(c.siteCode ? 0.26 : 0.22);
+  const qrCy = bodyTop + bodyH*(c.siteCode ? 0.16 : 0.22);
+
+  // QR (optional) — centered on the site-code + number block so it stays put when site code toggles
+  let numRight=colR;
+  if(c.qr){
+    const qrS=Math.min(bodyH*0.34, w*0.18);
+    const qrX=colR-qrS, qrY=qrCy - qrS/2;
+    drawQR(pen, c.qr, qrX, qrY, qrS);
+    numRight=qrX-w*0.02;
+  }
+  const numCx=(colL+numRight)/2, numW=Math.max(w*0.2,numRight-colL);
+
+  // site code (optional) — small line lifted clear above the tag number
+  if(c.siteCode){
+    const sFs=fitFont(pen,c.siteCode,numW*0.9,h*0.058,h*0.032);
+    pen.text(c.siteCode, numCx, bodyTop-bodyH*0.02+sFs*0.8, sFs, c.col,'center',true);
+  }
+
+  // tag number — large, black
+  const numFs=fitFont(pen,c.text,numW*0.96,h*0.185,h*0.07);
+  pen.text(c.text, numCx, numCy+numFs*0.34, numFs, c.num,'center',true);
+
+  // company logo — middle of the right column
+  if(c.logo){
+    const lH=bodyH*0.30, lW=Math.min(colW*0.94, w*0.40);
+    pen.fitImage(c.logo,c.logoFmt, colCx-lW/2, bodyTop+bodyH*0.525-lH/2, lW, lH, c.logoAlias);
+  } else pen.text('[ logo ]', colCx, bodyTop+bodyH*0.545, h*0.05, GREY,'center',false);
+
+  // phone — large, black, lower in the right column
+  const phFs=fitFont(pen,c.phone,colW*0.96,h*0.115,h*0.05);
+  pen.text(c.phone, colCx, bodyTop+bodyH*0.80+phFs*0.34, phFs, c.num,'center',true);
+
+  // DO NOT REMOVE THIS TAG — centered, lifted off the bottom frame
+  const warnFs=fitFont(pen,'DO NOT REMOVE THIS TAG',iw*0.9,h*0.072,h*0.040);
+  pen.text('DO NOT REMOVE THIS TAG', cx, iy+ih-ih*0.105, warnFs, c.col,'center',true);
+
+  // double theme-color frame
+  pen.strokeRoundRect(ix,iy,iw,ih,r,c.col,Math.max(1.2,h*0.024));
+  const gp=h*0.038;
+  pen.strokeRoundRect(ix+gp,iy+gp,iw-2*gp,ih-2*gp,Math.max(0,r-gp),c.col,Math.max(0.6,h*0.006));
 }
 function drawCompact(pen,x,y,w,h,c){
   const ins=h*0.06, r=(c.radius!=null?c.radius:h*0.12);
@@ -774,7 +962,7 @@ function buildCtx(L){
   const site=($('site').value||'').trim();
   return { header:`${et.label} Energy Isolation Point`, phone:$('phone').value||'',
     col:th.color, bg:(th.bg||[255,255,255]), num:(th.num||th.color),
-    sym:symCache[curEnergy]||null, symAlias:'sym-'+curEnergy,
+    sym:symCache[symKey(curEnergy)]||null, symAlias:'sym-'+curEnergy+'-'+curSymbolStyle, symScale:(ENERGY_TYPES[curEnergy].symScale||1),
     logo:logoCache[curCompany]||null, logoFmt:co.fmt, logoAlias:'logo-'+curCompany,
     radius:(L.custom?L.radiusPt:null),
     siteCode:($('showSite').checked && site && L.content!=='compact')?site:null,
@@ -843,7 +1031,7 @@ function drawPreview(){
   cv.style.width=(LW*S)+'px'; cv.style.height=(LH*S)+'px';
   const ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,LW*S,LH*S);
   ctx.fillStyle='#fff'; ctx.fillRect(0,0,LW*S,LH*S);
-  const drawer = (L.content==='compact') ? drawCompact : (c.style==='classic' ? drawIso : drawIsoModern);
+  const drawer = (L.content==='compact') ? drawCompact : (c.style==='og' ? drawIsoOG : c.style==='classic' ? drawIso : drawIsoModern);
   drawer(canvasPen(ctx,S), 0, 0, LW, LH, c);
 }
 
@@ -877,7 +1065,7 @@ async function generate(){
   if(err || !nums.length) return;
   const L=currentLayout(), g=layoutGeom(L);
   if(nums.length>1500 && !confirm(`${nums.length} labels will generate a large PDF in your browser and may take a while. Continue?`)) return;
-  await ensureSymbol(curEnergy); await ensureLogo(curCompany);
+  await ensureSymbol(curEnergy, curSymbolStyle); await ensureLogo(curCompany);
   const et=ENERGY_TYPES[curEnergy], co=COMPANIES[curCompany];
   const go=$('go'); go.disabled=true; go.textContent='Generating\u2026';
   $('progress').style.display='block'; $('progressBar').style.width='0%';
@@ -893,7 +1081,7 @@ async function generate(){
     });
     const ctx=buildCtx(L);
     const pen=pdfPen(doc);
-    const drawer = (L.content==='compact') ? drawCompact : (curStyle==='classic' ? drawIso : drawIsoModern);
+    const drawer = (L.content==='compact') ? drawCompact : (curStyle==='og' ? drawIsoOG : curStyle==='classic' ? drawIso : drawIsoModern);
     const CHUNK=50;
     for(let i=0;i<nums.length;i++){
       if(i>0 && i%g.perPage===0) doc.addPage();
@@ -923,7 +1111,7 @@ function saveSettings(){
     const cust={}; CUSTOM_FIELDS.forEach(id=> cust[id]=$(id).value);
     localStorage.setItem(LS, JSON.stringify({ format:curFormat, energy:curEnergy, company:curCompany, mode,
       start:$('start').value, end:$('end').value, list:$('list').value, prefix:$('prefix').value, pad:$('pad').value, phone:$('phone').value,
-      site:$('site').value, qrYear:$('qrYear').value, tech:$('tech').value, showSite:$('showSite').checked, showQR:$('showQR').checked, showAsset:$('showAsset').checked, style:curStyle, cust }));
+      site:$('site').value, qrYear:$('qrYear').value, tech:$('tech').value, showSite:$('showSite').checked, showQR:$('showQR').checked, showAsset:$('showAsset').checked, style:curStyle, symStyle:curSymbolStyle, cust }));
   }catch(e){}
 }
 function restoreInputs(s){
@@ -1150,6 +1338,55 @@ function exportProofSheet(fillable){
   }catch(e){ console.error(e); alert('Proof sheet export failed: '+(e.message||e)); }
 }
 
+/* ---------- printer calibration sheet (current format only) ---------- */
+function exportCalibration(){
+  const { jsPDF } = window.jspdf;
+  const L = currentLayout();
+  const g = layoutGeom(L);
+  const doc = new jsPDF({ unit:'pt', format:[g.page.w, g.page.h] });
+  doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(30,30,30);
+  doc.text(`PRINTER CALIBRATION  -  print at 100% / Actual Size (turn OFF fit-to-page).  Format: ${L.name || L.avery || 'custom'}`,
+           g.page.w/2, 12, { align:'center' });
+  doc.setLineWidth(0.5);
+  for(let i=0;i<g.perPage;i++){
+    const { x, y } = slotXY(g, i);
+    doc.setDrawColor(120,120,120); doc.rect(x, y, g.lw, g.lh);
+    const t=7; doc.setDrawColor(150,150,150);
+    [[x,y],[x+g.lw,y],[x,y+g.lh],[x+g.lw,y+g.lh]].forEach(([cx,cy])=>{
+      doc.line(cx-t, cy, cx+t, cy); doc.line(cx, cy-t, cx, cy+t);
+    });
+    doc.setFontSize(8); doc.setTextColor(160,160,160); doc.text(String(i+1), x+4, y+12);
+  }
+  const { x, y } = slotXY(g, 0);
+  doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(30,30,30);
+  doc.text('SCALE CHECK', x+8, y+16);
+  doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(80,80,80);
+  doc.text('Each outline must sit on the label', x+8, y+27);
+  doc.text('die-cut edges. The bar below must',  x+8, y+36);
+  doc.text('measure exactly as labelled.',       x+8, y+45);
+  const R = (L.labelW >= 2.5) ? 2 : 1;
+  const bx = x+10, by = y+g.lh-18, bw = R*PT;
+  doc.setDrawColor(200,30,30); doc.setLineWidth(1); doc.line(bx, by, bx+bw, by);
+  for(let k=0;k<=R;k++){ const tx=bx+k*PT; doc.line(tx, by-4, tx, by+4); }
+  doc.setFontSize(7); doc.setTextColor(200,30,30); doc.text(`= ${R}.0 in (measure exactly)`, bx, by-6);
+  const ccx = x+g.lw/2, ccy = y+g.lh/2;
+  doc.setDrawColor(200,30,30); doc.setLineWidth(0.6);
+  doc.line(ccx-8, ccy, ccx+8, ccy); doc.line(ccx, ccy-8, ccx, ccy+8);
+  doc.save(`calibration_${L.avery || 'custom'}.pdf`);
+}
+
+/* ---------- export all (runs the checked exporters in sequence) ---------- */
+async function exportSelected(){
+  const on   = id => { const el = $(id); return el && el.checked; };
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  if(on('xaLabels'))      { await generate();              await wait(600); }
+  if(on('xaXlsx'))        { await exportManifest('xlsx');  await wait(600); }
+  if(on('xaCsv'))         { await exportManifest('csv');   await wait(600); }
+  if(on('xaProofFill'))   { await exportProofSheet(true);  await wait(600); }
+  if(on('xaProofStatic')) { await exportProofSheet(false); await wait(600); }
+  if(on('xaCalib'))       { exportCalibration();           await wait(600); }
+}
+
 /* ---------- wiring ---------- */
 function fillSelect(id,obj){ const s=$(id); s.innerHTML=''; for(const k in obj){ const o=document.createElement('option'); o.value=k; o.textContent=(obj[k].name||obj[k].label); s.appendChild(o); } }
 function setMode(m){
@@ -1167,9 +1404,17 @@ $('pvPrev').onclick = ()=>stepPreview(-1);
 $('pvNext').onclick = ()=>stepPreview(1);
 $('tabRange').onclick = ()=>setMode('range');
 $('tabList').onclick  = ()=>setMode('list');
-function setStyle(s){ curStyle=s; $('styleModern').setAttribute('aria-selected', s==='modern'); $('styleClassic').setAttribute('aria-selected', s==='classic'); refresh(); }
+function setStyle(s){ curStyle=s; $('styleOG').setAttribute('aria-selected', s==='og'); $('styleModern').setAttribute('aria-selected', s==='modern'); $('styleClassic').setAttribute('aria-selected', s==='classic'); updateStyleSummary(); refresh(); }
+$('styleOG').onclick = ()=>setStyle('og');
 $('styleModern').onclick = ()=>setStyle('modern');
 $('styleClassic').onclick = ()=>setStyle('classic');
+function setSymBtns(s){ $('symOld').setAttribute('aria-selected', s==='old'); $('symNew').setAttribute('aria-selected', s==='new'); updateStyleSummary(); }
+async function setSymbolStyle(s){ curSymbolStyle=s; setSymBtns(s); await ensureSymbol(curEnergy, s); refresh(); }
+$('symOld').onclick = ()=>setSymbolStyle('old');
+$('symNew').onclick = ()=>setSymbolStyle('new');
+function updateStyleSummary(){ var el=$('styleSummary'); if(!el) return; var sl=curStyle==='og'?'OG':(curStyle.charAt(0).toUpperCase()+curStyle.slice(1)); var sm=curSymbolStyle.charAt(0).toUpperCase()+curSymbolStyle.slice(1); var pad=($('pad')&&$('pad').value)||'0'; el.textContent=sl+' \u00b7 '+sm+' symbols \u00b7 Pad '+pad; }
+$('pad').addEventListener('input', updateStyleSummary);
+$('styleToggle').onclick = ()=>{ var p=$('stylePanel'), open=p.hasAttribute('hidden'); if(open){ p.removeAttribute('hidden'); $('styleToggle').setAttribute('aria-expanded','true'); } else { p.setAttribute('hidden',''); $('styleToggle').setAttribute('aria-expanded','false'); } };
 ['start','end','list','prefix','pad','phone','site','qrYear','tech'].forEach(id=> $(id).addEventListener('input', refresh));
 ['showSite','showQR','showAsset'].forEach(id=> $(id).addEventListener('change', refresh));
 ['cPage','cContent','cW','cH','cCols','cRows','cML','cMT','cGX','cGY','cR'].forEach(id=> $(id).addEventListener('input', applyFormat));
@@ -1177,7 +1422,7 @@ $('styleClassic').onclick = ()=>setStyle('classic');
 $('go').onclick = generate;
 
 /* manifest & QA proof-sheet popovers */
-function closeActionMenus(except){ ['manifestMenu','qaMenu'].forEach(id=>{ const m=$(id); if(m && id!==except) m.hidden=true; }); }
+function closeActionMenus(except){ ['manifestMenu','qaMenu','exportAllMenu'].forEach(id=>{ const m=$(id); if(m && id!==except) m.hidden=true; }); }
 $('btnManifest').onclick = (e)=>{ e.stopPropagation(); if($('btnManifest').disabled) return; const m=$('manifestMenu'); const open=m.hidden; closeActionMenus(); m.hidden=!open; };
 $('btnQA').onclick = (e)=>{ e.stopPropagation(); if($('btnQA').disabled) return; const m=$('qaMenu'); const open=m.hidden; closeActionMenus(); m.hidden=!open; };
 document.addEventListener('click', (e)=>{ if(!e.target.closest('.menu-wrap')) closeActionMenus(); });
@@ -1187,6 +1432,10 @@ document.querySelectorAll('#manifestMenu .popitem').forEach(it=>{
 document.querySelectorAll('#qaMenu .popitem').forEach(it=>{
   it.onclick = ()=>{ $('qaMenu').hidden=true; exportProofSheet(it.dataset.fill==='fillable'); };
 });
+$('btnCalib').onclick = ()=> exportCalibration();
+$('btnExportAll').onclick = (e)=>{ e.stopPropagation(); const m=$('exportAllMenu'); const open=m.hidden; closeActionMenus(); m.hidden=!open; };
+$('exportAllMenu').addEventListener('click', (e)=> e.stopPropagation());
+$('xaRun').onclick = async ()=>{ $('exportAllMenu').hidden=true; await exportSelected(); };
 
 $('verBadge').textContent = 'v'+VERSION;
 $('buildDate').textContent = BUILD_DATE;
@@ -1207,11 +1456,13 @@ try{ SAVED=JSON.parse(localStorage.getItem(LS)||'null'); }catch(e){}
 if(SAVED){
   if(LAYOUTS[SAVED.format]) curFormat=SAVED.format;
   if(ENERGY_TYPES[SAVED.energy]) curEnergy=SAVED.energy;
-  if(SAVED.style==='classic'||SAVED.style==='modern') curStyle=SAVED.style;
+  if(SAVED.style==='classic'||SAVED.style==='modern'||SAVED.style==='og') curStyle=SAVED.style;
+  if(SAVED.symStyle==='old'||SAVED.symStyle==='new') curSymbolStyle=SAVED.symStyle;
   if(SAVED.mode==='list') mode='list';
 }
 $('format').value=curFormat; $('energy').value=curEnergy;
 setStyle(curStyle);
+setSymBtns(curSymbolStyle);
 restoreInputs(SAVED);                 // custom fields needed before applyFormat geometry
 applyFormat();
 (async ()=>{
